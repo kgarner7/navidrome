@@ -34,13 +34,13 @@ builds:
       - CGO_ENABLED=1
       - CC=/opt/cross-pi-gcc/bin/arm-linux-gnueabihf-gcc
       - CXX=/opt/cross-pi-gcc/bin/arm-linux-gnueabihf-g++
-      - PKG_CONFIG_PATH=/arm/lib/pkgconfig
+      - PKG_CONFIG_PATH=/arm6/lib/pkgconfig
     goos:
       - linux
     goarch:
       - arm
     goarm:
-      - 6
+      - 5
     flags:
       - -tags=embed,netgo
     ldflags:
