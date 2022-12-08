@@ -371,6 +371,11 @@
             "orderLoop": "Repeat",
             "singleLoop": "Repeat One",
             "shufflePlay": "Shuffle"
+        },
+        "gain": {
+            "none": "No ReplayGain",
+            "album": "Gain per album",
+            "track": "Gain per track"
         }
     },
     "about": {

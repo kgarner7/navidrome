@@ -24,6 +24,16 @@ import locale from './locale'
 import { keyMap } from '../hotkeys'
 import keyHandlers from './keyHandlers'
 
+function calculateReplayGain(gain, peak) {
+  if (gain === undefined || peak === undefined) {
+    return 1
+  }
+
+  // https://wiki.hydrogenaud.io/index.php?title=ReplayGain_1.0_specification&section=19
+  // Normalized to max gain
+  return Math.min(10 ** (gain / 20), 1 / peak)
+}
+
 const Player = () => {
   const theme = useCurrentTheme()
   const translate = useTranslate()
@@ -49,6 +59,55 @@ const Player = () => {
     (state) => state.settings.notifications || false
   )
 
+  const gainMode = playerState.gainMode ?? 'none'
+
+  const [context, setContext] = useState(null)
+  const [gainNode, setGainNode] = useState(null)
+
+  useEffect(() => {
+    if (
+      context === null &&
+      audioInstance &&
+      config.enableReplayGain &&
+      'AudioContext' in window
+    ) {
+      const ctx = new AudioContext()
+      const source = ctx.createMediaElementSource(audioInstance)
+      const gain = ctx.createGain()
+
+      source.connect(gain)
+      gain.connect(ctx.destination)
+
+      setContext(ctx)
+      setGainNode(gain)
+    }
+  }, [audioInstance, context])
+
+  useEffect(() => {
+    if (gainNode) {
+      const current = playerState.current || {}
+      const song = current.song || {}
+
+      let numericGain
+
+      switch (gainMode) {
+        case 'album': {
+          numericGain = calculateReplayGain(song.albumGain, song.albumPeak)
+          break
+        }
+        case 'track': {
+          numericGain = calculateReplayGain(song.trackGain, song.trackPeak)
+          break
+        }
+        default: {
+          numericGain = 1
+        }
+      }
+
+      gainNode.gain.setValueAtTime(numericGain, context.currentTime)
+    }
+  }, [audioInstance, context, gainNode, gainMode, playerState])
+
   const defaultOptions = useMemo(
     () => ({
       theme: playerTheme,
@@ -73,11 +132,15 @@ const Player = () => {
       },
       volumeFade: { fadeIn: 200, fadeOut: 200 },
       renderAudioTitle: (audioInfo, isMobile) => (
-        <AudioTitle audioInfo={audioInfo} isMobile={isMobile} />
+        <AudioTitle
+          audioInfo={audioInfo}
+          gainMode={gainMode}
+          isMobile={isMobile}
+        />
       ),
       locale: locale(translate),
     }),
-    [isDesktop, playerTheme, translate]
+    [gainMode, isDesktop, playerTheme, translate]
   )
 
   const options = useMemo(() => {
@@ -142,6 +205,12 @@ const Player = () => {
 
   const onAudioPlay = useCallback(
     (info) => {
+      // Do this to start the context; on chrome-based browsers, the context
+      // will start paused since it is created prior to user interaction
+      if (context && context.state !== 'running') {
+        context.resume()
+      }
+
       dispatch(currentPlaying(info))
       if (startTime === null) {
         setStartTime(Date.now())
@@ -167,7 +236,7 @@ const Player = () => {
         }
       }
     },
-    [dispatch, showNotifications, startTime]
+    [context, dispatch, showNotifications, startTime]
   )
 
   const onAudioPlayTrackChange = useCallback(() => {
