@@ -36,6 +36,7 @@ type configOptions struct {
 	PlaylistsPath              string
 	DefaultDownloadTranscoding bool
 
+	EnableDuplicateSearch  bool
 	SearchFullString       bool
 	RecentlyAddedByModTime bool
 	IgnoredArticles        string
@@ -232,6 +233,7 @@ func init() {
 	viper.SetDefault("defaultdownloadtranscoding", false)
 
 	// Config options only valid for file/env configuration
+	viper.SetDefault("enableduplicatesearch", false)
 	viper.SetDefault("searchfullstring", false)
 	viper.SetDefault("recentlyaddedbymodtime", false)
 	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
