@@ -74,6 +74,7 @@ func (s mediaFileMapper) toMediaFile(md metadata.Tags) model.MediaFile {
 	mf.Bpm = md.Bpm()
 	mf.CreatedAt = time.Now()
 	mf.UpdatedAt = md.ModificationTime()
+	mf.IgnoreScrobble = md.IgnoreScrobble()
 
 	return *mf
 }

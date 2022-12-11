@@ -120,6 +120,11 @@ func (t Tags) Size() int64                 { return t.fileInfo.Size() }
 func (t Tags) FilePath() string            { return t.filePath }
 func (t Tags) Suffix() string              { return strings.ToLower(strings.TrimPrefix(path.Ext(t.filePath), ".")) }
 
+func (t Tags) IgnoreScrobble() bool {
+	_, ok := t.tags["noscrobble"]
+	return ok
+}
+
 func (t Tags) getTags(tagNames ...string) []string {
 	for _, tag := range tagNames {
 		if v, ok := t.tags[tag]; ok {

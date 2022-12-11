@@ -51,6 +51,7 @@ type MediaFile struct {
 	MbzAlbumArtistID     string    `structs:"mbz_album_artist_id" json:"mbzAlbumArtistId,omitempty"   orm:"column(mbz_album_artist_id)"`
 	MbzAlbumType         string    `structs:"mbz_album_type" json:"mbzAlbumType,omitempty"`
 	MbzAlbumComment      string    `structs:"mbz_album_comment" json:"mbzAlbumComment,omitempty"`
+	IgnoreScrobble       bool      `structs:"ignore_scrobble" json:"ignoreScrobble"`
 	CreatedAt            time.Time `structs:"created_at" json:"createdAt"` // Time this entry was created in the DB
 	UpdatedAt            time.Time `structs:"updated_at" json:"updatedAt"` // Time of file last update (mtime)
 }
