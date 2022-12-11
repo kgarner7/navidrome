@@ -126,6 +126,11 @@ func (t Tags) AlbumPeak() float64 { return t.getPeakValue("replaygain_album_peak
 func (t Tags) TrackGain() float64 { return t.getGainValue("replaygain_track_gain") }
 func (t Tags) TrackPeak() float64 { return t.getPeakValue("replaygain_track_peak") }
 
+func (t Tags) IgnoreScrobble() bool {
+	_, ok := t.tags["noscrobble"]
+	return ok
+}
+
 func (t Tags) getGainValue(tagName string) float64 {
 	// Gain is in the form [-]a.bb dB
 	var tag = t.getFirstTagValue(tagName)

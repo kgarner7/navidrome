@@ -81,6 +81,9 @@ func (p *playTracker) NowPlaying(ctx context.Context, playerId string, playerNam
 
 func (p *playTracker) dispatchNowPlaying(ctx context.Context, userId string, trackId string) {
 	t, err := p.ds.MediaFile(ctx).Get(trackId)
+	if t.IgnoreScrobble {
+		return
+	}
 	if err != nil {
 		log.Error(ctx, "Error retrieving mediaFile", "id", trackId, err)
 		return
@@ -141,7 +144,7 @@ func (p *playTracker) Submit(ctx context.Context, submissions []Submission) erro
 			success++
 			event.With("song", mf.ID).With("album", mf.AlbumID).With("artist", mf.AlbumArtistID)
 			log.Info(ctx, "Scrobbled", "title", mf.Title, "artist", mf.Artist, "user", username, "timestamp", s.Timestamp)
-			if player.ScrobbleEnabled {
+			if player.ScrobbleEnabled && !mf.IgnoreScrobble {
 				p.dispatchScrobble(ctx, mf, s.Timestamp)
 			}
 		}

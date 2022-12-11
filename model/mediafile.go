@@ -55,6 +55,7 @@ type MediaFile struct {
 	AlbumPeak            float64 `structs:"album_peak" json:"albumPeak"`
 	TrackGain            float64 `structs:"track_gain" json:"trackGain"`
 	TrackPeak            float64 `structs:"track_peak" json:"trackPeak"`
+	IgnoreScrobble       bool    `structs:"ignore_scrobble" json:"ignoreScrobble"`
 
 	CreatedAt time.Time `structs:"created_at" json:"createdAt"` // Time this entry was created in the DB
 	UpdatedAt time.Time `structs:"updated_at" json:"updatedAt"` // Time of file last update (mtime)
