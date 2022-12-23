@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -40,12 +41,12 @@ var redacted = &Hook{
 }
 
 const (
-	LevelCritical = Level(logrus.FatalLevel)
-	LevelError    = Level(logrus.ErrorLevel)
-	LevelWarn     = Level(logrus.WarnLevel)
-	LevelInfo     = Level(logrus.InfoLevel)
-	LevelDebug    = Level(logrus.DebugLevel)
-	LevelTrace    = Level(logrus.TraceLevel)
+	LevelFatal = Level(logrus.FatalLevel)
+	LevelError = Level(logrus.ErrorLevel)
+	LevelWarn  = Level(logrus.WarnLevel)
+	LevelInfo  = Level(logrus.InfoLevel)
+	LevelDebug = Level(logrus.DebugLevel)
+	LevelTrace = Level(logrus.TraceLevel)
 )
 
 type contextKey string
@@ -81,8 +82,8 @@ func levelFromString(l string) Level {
 	envLevel := strings.ToLower(l)
 	var level Level
 	switch envLevel {
-	case "critical":
-		level = LevelCritical
+	case "fatal":
+		level = LevelFatal
 	case "error":
 		level = LevelError
 	case "warn":
@@ -143,6 +144,11 @@ func SetDefaultLogger(l *logrus.Logger) {
 
 func CurrentLevel() Level {
 	return currentLevel
+}
+
+func Fatal(args ...interface{}) {
+	log(LevelFatal, args...)
+	os.Exit(1)
 }
 
 func Error(args ...interface{}) {
