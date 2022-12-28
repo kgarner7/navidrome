@@ -2,13 +2,12 @@ package model
 
 import (
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/navidrome/navidrome/model/criteria"
-	"github.com/navidrome/navidrome/utils"
+	"golang.org/x/exp/slices"
 )
 
 type Playlist struct {
@@ -46,7 +45,7 @@ func (pls Playlist) MediaFiles() MediaFiles {
 func (pls *Playlist) RemoveTracks(idxToRemove []int) {
 	var newTracks PlaylistTracks
 	for i, t := range pls.Tracks {
-		if utils.IntInSlice(i, idxToRemove) {
+		if slices.Contains(idxToRemove, i) {
 			continue
 		}
 		newTracks = append(newTracks, t)
@@ -95,6 +94,10 @@ func (pls *Playlist) AddMediaFiles(mfs MediaFiles) {
 	}
 }
 
+func (pls Playlist) CoverArtID() ArtworkID {
+	return artworkIDFromPlaylist(pls)
+}
+
 type Playlists []Playlist
 
 type PlaylistRepository interface {
@@ -138,9 +141,4 @@ type PlaylistTrackRepository interface {
 	Delete(id ...string) error
 	DeleteAll() error
 	Reorder(pos int, newPos int) error
-}
-
-func IsValidPlaylist(filePath string) bool {
-	extension := strings.ToLower(filepath.Ext(filePath))
-	return extension == ".m3u" || extension == ".m3u8" || extension == ".nsp"
 }

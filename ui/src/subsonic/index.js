@@ -51,10 +51,11 @@ const getCoverArtUrl = (record, size) => {
     ...(size && { size }),
   }
 
-  if (record.coverArtId) {
-    return baseUrl(url('getCoverArt', record.coverArtId, options))
+  // TODO Move this logic to server. `song` and `album` should have a CoverArtID
+  if (record.album) {
+    return baseUrl(url('getCoverArt', 'mf-' + record.id, options))
   } else {
-    return baseUrl(url('getCoverArt', 'not_found', size && { size }))
+    return baseUrl(url('getCoverArt', 'al-' + record.id, options))
   }
 }
 

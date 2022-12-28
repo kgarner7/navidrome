@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/core"
+	"github.com/navidrome/navidrome/core/artwork"
 	"github.com/navidrome/navidrome/core/scrobbler"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -19,6 +20,7 @@ import (
 	"github.com/navidrome/navidrome/server/events"
 	"github.com/navidrome/navidrome/server/subsonic/responses"
 	"github.com/navidrome/navidrome/utils"
+	"github.com/navidrome/navidrome/utils/number"
 )
 
 const Version = "1.16.1"
@@ -29,7 +31,7 @@ type handlerRaw = func(http.ResponseWriter, *http.Request) (*responses.Subsonic,
 type Router struct {
 	http.Handler
 	ds               model.DataStore
-	artwork          core.Artwork
+	artwork          artwork.Artwork
 	streamer         core.MediaStreamer
 	archiver         core.Archiver
 	players          core.Players
@@ -40,7 +42,7 @@ type Router struct {
 	scrobbler        scrobbler.PlayTracker
 }
 
-func New(ds model.DataStore, artwork core.Artwork, streamer core.MediaStreamer, archiver core.Archiver,
+func New(ds model.DataStore, artwork artwork.Artwork, streamer core.MediaStreamer, archiver core.Archiver,
 	players core.Players, externalMetadata core.ExternalMetadata, scanner scanner.Scanner, broker events.Broker,
 	playlists core.Playlists, scrobbler scrobbler.PlayTracker) *Router {
 	r := &Router{
@@ -137,7 +139,7 @@ func (api *Router) routes() http.Handler {
 	})
 	r.Group(func(r chi.Router) {
 		// configure request throttling
-		maxRequests := utils.MaxInt(2, runtime.NumCPU())
+		maxRequests := number.Max(2, runtime.NumCPU())
 		r.Use(middleware.ThrottleBacklog(maxRequests, consts.RequestThrottleBacklogLimit, consts.RequestThrottleBacklogTimeout))
 		hr(r, "getAvatar", api.GetAvatar)
 		hr(r, "getCoverArt", api.GetCoverArt)
@@ -184,7 +186,7 @@ func hr(r chi.Router, path string, f handlerRaw) {
 				if errors.Is(err, model.ErrNotFound) {
 					err = newError(responses.ErrorDataNotFound, "data not found")
 				} else {
-					err = newError(responses.ErrorGeneric, "Internal Error")
+					err = newError(responses.ErrorGeneric, fmt.Sprintf("Internal Server Error: %s", err))
 				}
 			}
 			sendError(w, r, err)
