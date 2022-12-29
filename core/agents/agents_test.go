@@ -179,6 +179,33 @@ var _ = Describe("Agents", func() {
 				Expect(mock.Args).To(BeEmpty())
 			})
 		})
+
+		Describe("GetAlbumInfo", func() {
+			It("returns meaningful data", func() {
+				Expect(ag.GetAlbumInfo(ctx, "album", "artist", "mbid")).To(Equal(&AlbumInfo{
+					Name:         "A Song",
+					MBID:         "mbid444",
+					Description:  "A Description",
+					URL:          "External URL",
+					SmallImgUrl:  "Small URL",
+					MediumImgUrl: "Medium URL",
+					LargeImgUrl:  "Large URL",
+				}))
+				Expect(mock.Args).To(ConsistOf("album", "artist", "mbid"))
+			})
+			It("skips the agent if it returns an error", func() {
+				mock.Err = errors.New("error")
+				_, err := ag.GetAlbumInfo(ctx, "album", "artist", "mbid")
+				Expect(err).To(MatchError(ErrNotFound))
+				Expect(mock.Args).To(ConsistOf("album", "artist", "mbid"))
+			})
+			It("interrupts if the context is canceled", func() {
+				cancel()
+				_, err := ag.GetAlbumInfo(ctx, "album", "artist", "mbid")
+				Expect(err).To(MatchError(ErrNotFound))
+				Expect(mock.Args).To(BeEmpty())
+			})
+		})
 	})
 })
 
@@ -246,4 +273,20 @@ func (a *mockAgent) GetTopSongs(ctx context.Context, id, artistName, mbid string
 		Name: "A Song",
 		MBID: "mbid444",
 	}}, nil
+}
+
+func (a *mockAgent) GetAlbumInfo(ctx context.Context, name, artist, mbid string) (*AlbumInfo, error) {
+	a.Args = []interface{}{name, artist, mbid}
+	if a.Err != nil {
+		return nil, a.Err
+	}
+	return &AlbumInfo{
+		Name:         "A Song",
+		MBID:         "mbid444",
+		Description:  "A Description",
+		URL:          "External URL",
+		SmallImgUrl:  "Small URL",
+		MediumImgUrl: "Medium URL",
+		LargeImgUrl:  "Large URL",
+	}, nil
 }
