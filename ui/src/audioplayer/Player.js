@@ -151,8 +151,11 @@ const Player = () => {
       playIndex: playerState.playIndex,
       autoPlay: playerState.clear || playerState.playIndex === 0,
       clearPriorAudioLists: playerState.clear,
-      extendsContent: <PlayerToolbar id={current.trackId} />,
+      extendsContent: (
+        <PlayerToolbar id={current.trackId} isRadio={current.isRadio} />
+      ),
       defaultVolume: isMobilePlayer ? 1 : playerState.volume,
+      showMediaSession: !current.isRadio,
     }
   }, [playerState, defaultOptions, isMobilePlayer])
 
@@ -190,7 +193,9 @@ const Player = () => {
       }
 
       if (!scrobbled) {
-        info.trackId && subsonic.scrobble(info.trackId, startTime)
+        info.trackId &&
+          !info.isRadio &&
+          subsonic.scrobble(info.trackId, startTime)
         setScrobbled(true)
       }
     },
@@ -218,7 +223,9 @@ const Player = () => {
       if (info.duration) {
         const song = info.song
         document.title = `${song.title} - ${song.artist} - Navidrome`
-        subsonic.nowPlaying(info.trackId)
+        if (!info.isRadio) {
+          subsonic.nowPlaying(info.trackId)
+        }
         setPreload(false)
         if (config.gaTrackingId) {
           ReactGA.event({
