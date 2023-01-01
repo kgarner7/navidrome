@@ -72,6 +72,8 @@ const Player = () => {
       'AudioContext' in window
     ) {
       const ctx = new AudioContext()
+      // we need this to support radios in firefox
+      audioInstance.crossOrigin = 'anonymous'
       const source = ctx.createMediaElementSource(audioInstance)
       const gain = ctx.createGain()
 
@@ -86,6 +88,9 @@ const Player = () => {
   useEffect(() => {
     if (gainNode) {
       const current = playerState.current || {}
+
+      if (current.isRadio) return
+
       const song = current.song || {}
 
       let numericGain
@@ -123,7 +128,6 @@ const Player = () => {
       toggleMode: !isDesktop,
       glassBg: false,
       showThemeSwitch: false,
-      showMediaSession: true,
       restartCurrentOnPrev: true,
       quietUpdate: true,
       defaultPosition: {
