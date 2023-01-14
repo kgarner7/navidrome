@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -28,6 +29,7 @@ type Server struct {
 
 func New(ds model.DataStore) *Server {
 	s := &Server{ds: ds}
+	auth.Init(s.ds)
 	initialSetup(ds)
 	s.initRoutes()
 	checkFfmpegInstallation()
@@ -80,8 +82,6 @@ func (s *Server) Run(ctx context.Context, addr string) error {
 }
 
 func (s *Server) initRoutes() {
-	auth.Init(s.ds)
-
 	s.appRoot = path.Join(conf.Server.BaseURL, consts.URLPathUI)
 
 	r := chi.NewRouter()
@@ -138,10 +138,13 @@ func (s *Server) frontendAssetsHandler() http.Handler {
 	return r
 }
 
-func AbsoluteURL(r *http.Request, url string) string {
+func AbsoluteURL(r *http.Request, url string, params url.Values) string {
 	if strings.HasPrefix(url, "/") {
 		appRoot := path.Join(r.Host, conf.Server.BaseURL, url)
 		url = r.URL.Scheme + "://" + appRoot
+	}
+	if len(params) > 0 {
+		url = url + "?" + params.Encode()
 	}
 	return url
 }
