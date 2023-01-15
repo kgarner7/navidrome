@@ -4,14 +4,18 @@ import {
   CreateButton,
   Datagrid,
   DateField,
+  Filter,
   List,
   sanitizeListRestProps,
+  SearchInput,
+  SimpleList,
   TextField,
   TopToolbar,
+  UrlField,
   useTranslate,
 } from 'react-admin'
 import { ToggleFieldsMenu, useSelectedFields } from '../common'
-import { RadioContextMenu } from './RadioContextMenu'
+import { StreamField } from './StreamField'
 
 const useStyles = makeStyles({
   row: {
@@ -25,6 +29,12 @@ const useStyles = makeStyles({
     visibility: 'hidden',
   },
 })
+
+const RadioFilter = (props) => (
+  <Filter {...props} variant={'outlined'}>
+    <SearchInput id="search" source="name" alwaysOn />
+  </Filter>
+)
 
 const RadioListActions = ({
   className,
@@ -60,14 +70,23 @@ const RadioListActions = ({
 }
 
 const RadioList = ({ permissions, ...props }) => {
+  const isXsmall = useMediaQuery((theme) => theme.breakpoints.down('xs'))
+
   const classes = useStyles()
 
   const isAdmin = permissions === 'admin'
 
   const toggleableFields = {
     name: <TextField source="name" />,
-    streamUrl: <TextField source="streamUrl" />,
-    homePageUrl: <TextField source="homePageUrl" />,
+    homePageUrl: (
+      <UrlField
+        source="homePageUrl"
+        onClick={(e) => e.stopPropagation()}
+        target="_blank"
+        rel="noopener noreferrer"
+      />
+    ),
+    streamUrl: <StreamField source="streamUrl" />,
     createdAt: <DateField source="createdAt" showTime />,
     updatedAt: <DateField source="updatedAt" showTime />,
   }
@@ -75,7 +94,7 @@ const RadioList = ({ permissions, ...props }) => {
   const columns = useSelectedFields({
     resource: 'radio',
     columns: toggleableFields,
-    defaultOff: ['homePageUrl', 'createdAt', 'updatedAt'],
+    defaultOff: ['updatedAt'],
   })
 
   return (
@@ -85,14 +104,34 @@ const RadioList = ({ permissions, ...props }) => {
       bulkActionButtons={isAdmin ? undefined : false}
       hasCreate={isAdmin}
       actions={<RadioListActions isAdmin={isAdmin} />}
+      filters={<RadioFilter />}
+      perPage={isXsmall ? 25 : 10}
     >
-      <Datagrid
-        rowClick={isAdmin ? 'edit' : 'show'}
-        classes={{ row: classes.row }}
-      >
-        {columns}
-        <RadioContextMenu className={classes.contextMenu} />
-      </Datagrid>
+      {isXsmall ? (
+        <SimpleList
+          linkType={isAdmin ? 'edit' : 'show'}
+          leftIcon={(r) => (
+            <StreamField
+              record={r}
+              source={'streamUrl'}
+              hideUrl
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+            />
+          )}
+          primaryText={(r) => r.name}
+          secondaryText={(r) => r.homePageUrl}
+        />
+      ) : (
+        <Datagrid
+          rowClick={isAdmin ? 'edit' : 'show'}
+          classes={{ row: classes.row }}
+        >
+          {columns}
+        </Datagrid>
+      )}
     </List>
   )
 }

@@ -51,7 +51,9 @@ const Player = () => {
   )
   const { authenticated } = useAuthState()
   const visible = authenticated && playerState.queue.length > 0
+  const isRadio = playerState.current?.isRadio || false
   const classes = useStyle({
+    isRadio,
     visible,
     enableCoverAnimation: config.enableCoverAnimation,
   })
@@ -186,6 +188,10 @@ const Player = () => {
         return
       }
 
+      if (info.isRadio) {
+        return
+      }
+
       if (!preloaded) {
         const next = nextSong()
         if (next != null) {
@@ -197,9 +203,7 @@ const Player = () => {
       }
 
       if (!scrobbled) {
-        info.trackId &&
-          !info.isRadio &&
-          subsonic.scrobble(info.trackId, startTime)
+        info.trackId && subsonic.scrobble(info.trackId, startTime)
         setScrobbled(true)
       }
     },

@@ -1,4 +1,5 @@
 import { Card } from '@material-ui/core'
+import React from 'react'
 import {
   DateField,
   required,
@@ -8,7 +9,7 @@ import {
   UrlField,
   useShowController,
 } from 'react-admin'
-import RadioActions from './RadioActions'
+import { StreamField } from './StreamField'
 
 const RadioShowLayout = ({ ...props }) => {
   const { record } = props
@@ -19,16 +20,16 @@ const RadioShowLayout = ({ ...props }) => {
 
   return (
     <>
-      {record && <RadioActions record={record} />}
       {record && (
         <Card>
           <SimpleShowLayout>
             <TextField source="name" validate={[required()]} />
-            <UrlField type="url" source="streamUrl" rel="noreferrer noopener" />
+            <StreamField source="streamUrl" />
             <UrlField
               type="url"
               source="homePageUrl"
               rel="noreferrer noopener"
+              target="_blank"
             />
             <DateField variant="body1" source="updatedAt" showTime />
             <DateField variant="body1" source="createdAt" showTime />

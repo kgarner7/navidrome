@@ -14,7 +14,6 @@ import {
   useRedirect,
 } from 'react-admin'
 import DeleteRadioButton from './DeleteRadioButton'
-import RadioActions from './RadioActions'
 
 const useStyles = makeStyles({
   toolbar: {
@@ -93,7 +92,6 @@ const RadioEditLayout = ({
 
   return (
     <>
-      {record && <RadioActions record={record} />}
       {record && (
         <Card>
           <SimpleForm
@@ -106,11 +104,13 @@ const RadioEditLayout = ({
             <TextInput
               type="url"
               source="streamUrl"
+              fullWidth
               validate={[required(), urlValidate]}
             />
             <TextInput
               type="url"
               source="homePageUrl"
+              fullWidth
               validate={[urlValidate]}
             />
             <DateField variant="body1" source="updatedAt" showTime />

@@ -1,17 +1,35 @@
-export function songFromRadio(radio, resourceName) {
+export async function songFromRadio(radio) {
   if (!radio) {
     return undefined
   }
 
-  const url = new URL(radio.homePageUrl ?? radio.streamUrl)
-  url.pathname = '/favicon.ico'
+  let cover = 'internet-radio-icon.svg'
+  try {
+    const url = new URL(radio.homePageUrl ?? radio.streamUrl)
+    url.pathname = '/favicon.ico'
+    await resourceExists(url)
+    cover = url.toString()
+  } catch {}
 
   return {
     ...radio,
     title: radio.name,
-    album: radio.homePageUrl || resourceName,
-    artist: resourceName,
-    cover: url.toString(),
+    album: radio.homePageUrl || radio.name,
+    artist: radio.name,
+    cover,
     isRadio: true,
   }
+}
+
+const resourceExists = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = function () {
+      resolve(url)
+    }
+    img.onerror = function () {
+      reject('not found')
+    }
+    img.src = url
+  })
 }
