@@ -71,7 +71,10 @@ const Player = () => {
       config.enableReplayGain &&
       'AudioContext' in window
     ) {
-      const ctx = new AudioContext()
+      const ctx = new AudioContext({
+        latencyHint: 'playback',
+        sampleRate: 96000,
+      })
       // we need this to support radios in firefox
       audioInstance.crossOrigin = 'anonymous'
       const source = ctx.createMediaElementSource(audioInstance)
