@@ -77,10 +77,10 @@ func (s mediaFileMapper) toMediaFile(md metadata.Tags) model.MediaFile {
 	mf.IgnoreScrobble = md.IgnoreScrobble()
 
 	if conf.Server.EnableReplayGain {
-		mf.AlbumGain = md.AlbumGain()
-		mf.AlbumPeak = md.AlbumPeak()
-		mf.TrackGain = md.TrackGain()
-		mf.TrackPeak = md.TrackPeak()
+		mf.RGAlbumGain = md.RGAlbumGain()
+		mf.RGAlbumPeak = md.RGAlbumPeak()
+		mf.RGTrackGain = md.RGTrackGain()
+		mf.RGTrackPeak = md.RGTrackPeak()
 	}
 
 	return *mf
