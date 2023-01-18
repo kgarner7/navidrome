@@ -83,13 +83,6 @@ func (s mediaFileMapper) toMediaFile(md metadata.Tags) model.MediaFile {
 		mf.RGTrackPeak = md.RGTrackPeak()
 	}
 
-	if conf.Server.EnableReplayGain {
-		mf.RGAlbumGain = md.RGAlbumGain()
-		mf.RGAlbumPeak = md.RGAlbumPeak()
-		mf.RGTrackGain = md.RGTrackGain()
-		mf.RGTrackPeak = md.RGTrackPeak()
-	}
-
 	return *mf
 }
 
