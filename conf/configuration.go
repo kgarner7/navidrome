@@ -17,64 +17,61 @@ import (
 )
 
 type configOptions struct {
-	ConfigFile              string
-	Address                 string
-	Port                    int
-	MusicFolder             string
-	DataFolder              string
-	DbPath                  string
-	LogLevel                string
-	ScanInterval            time.Duration
-	ScanSchedule            string
-	SessionTimeout          time.Duration
-	BaseURL                 string
-	UILoginBackgroundURL    string
-	EnableTranscodingConfig bool
-	EnableDownloads         bool
-	EnableExternalServices  bool
-	EnableMediaFileCoverArt bool
-	TranscodingCacheSize    string
-	ImageCacheSize          string
-	AutoImportPlaylists     bool
-	PlaylistsPath           string
-	AutoTranscodeDownload   bool
-
-	EnableDuplicateSearch  bool
-	SearchFullString       bool
-	RecentlyAddedByModTime bool
-	IgnoredArticles        string
-	IndexGroups            string
-	ProbeCommand           string
-	CoverArtPriority       string
-	CoverJpegQuality       int
-	UIWelcomeMessage       string
-	EnableGravatar         bool
-	EnableFavourites       bool
-	EnableStarRating       bool
-	EnableUserEditing      bool
-	DefaultTheme           string
-	DefaultLanguage        string
-	DefaultUIVolume        int
-	EnableCoverAnimation   bool
-	GATrackingID           string
-	EnableLogRedacting     bool
-	AuthRequestLimit       int
-	AuthWindowLength       time.Duration
-	PasswordEncryptionKey  string
-	ReverseProxyUserHeader string
-	ReverseProxyWhitelist  string
-	Prometheus             prometheusOptions
-	EnableReplayGain       bool
-
-	Scanner scannerOptions
+	ConfigFile                   string
+	Address                      string
+	Port                         int
+	MusicFolder                  string
+	DataFolder                   string
+	DbPath                       string
+	LogLevel                     string
+	ScanInterval                 time.Duration
+	ScanSchedule                 string
+	SessionTimeout               time.Duration
+	BaseURL                      string
+	UILoginBackgroundURL         string
+	EnableTranscodingConfig      bool
+	EnableDownloads              bool
+	EnableExternalServices       bool
+	EnableMediaFileCoverArt      bool
+	TranscodingCacheSize         string
+	ImageCacheSize               string
+	AutoImportPlaylists          bool
+	PlaylistsPath                string
+	AutoTranscodeDownload        bool
+	EnableDuplicateSearch        bool
+	DefaultDownsamplingFormat    string
+	SearchFullString             bool
+	RecentlyAddedByModTime       bool
+	IgnoredArticles              string
+	IndexGroups                  string
+	SubsonicArtistParticipations bool
+	ProbeCommand                 string
+	CoverArtPriority             string
+	CoverJpegQuality             int
+	UIWelcomeMessage             string
+	EnableGravatar               bool
+	EnableFavourites             bool
+	EnableStarRating             bool
+	EnableUserEditing            bool
+	DefaultTheme                 string
+	DefaultLanguage              string
+	DefaultUIVolume              int
+	EnableReplayGain             bool
+	EnableCoverAnimation         bool
+	GATrackingID                 string
+	EnableLogRedacting           bool
+	AuthRequestLimit             int
+	AuthWindowLength             time.Duration
+	PasswordEncryptionKey        string
+	ReverseProxyUserHeader       string
+	ReverseProxyWhitelist        string
+	Prometheus                   prometheusOptions
+	Scanner                      scannerOptions
 
 	Agents       string
 	LastFM       lastfmOptions
 	Spotify      spotifyOptions
 	ListenBrainz listenBrainzOptions
-
-	//test downsampling
-	DefaultDownsamplingFormat string
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	DevLogSourceLine                 bool
@@ -240,10 +237,12 @@ func init() {
 
 	// Config options only valid for file/env configuration
 	viper.SetDefault("enableduplicatesearch", false)
+	viper.SetDefault("defaultdownsamplingformat", consts.DefaultDownsamplingFormat)
 	viper.SetDefault("searchfullstring", false)
 	viper.SetDefault("recentlyaddedbymodtime", false)
 	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
 	viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
+	viper.SetDefault("subsonicartistparticipations", false)
 	viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
 	viper.SetDefault("coverartpriority", "cover.*, folder.*, front.*, embedded, external")
 	viper.SetDefault("coverjpegquality", 75)
@@ -255,6 +254,7 @@ func init() {
 	viper.SetDefault("defaulttheme", "Dark")
 	viper.SetDefault("defaultlanguage", "")
 	viper.SetDefault("defaultuivolume", consts.DefaultUIVolume)
+	viper.SetDefault("enablereplaygain", false)
 	viper.SetDefault("enablecoveranimation", true)
 	viper.SetDefault("gatrackingid", "")
 	viper.SetDefault("enablelogredacting", true)
@@ -268,8 +268,6 @@ func init() {
 	viper.SetDefault("prometheus.enabled", false)
 	viper.SetDefault("prometheus.metricspath", "/metrics")
 
-	viper.SetDefault("enablereplaygain", false)
-
 	viper.SetDefault("scanner.extractor", consts.DefaultScannerExtractor)
 	viper.SetDefault("scanner.genreseparators", ";/,")
 
@@ -282,8 +280,6 @@ func init() {
 	viper.SetDefault("spotify.secret", "")
 	viper.SetDefault("listenbrainz.enabled", true)
 	viper.SetDefault("listenbrainz.baseurl", "https://api.listenbrainz.org/1/")
-
-	viper.SetDefault("defaultdownsamplingformat", consts.DefaultDownsamplingFormat)
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
