@@ -12,6 +12,7 @@ import { AddToPlaylistDialog } from '../dialogs'
 import ExpandInfoDialog from '../dialogs/ExpandInfoDialog'
 import AlbumInfo from '../album/AlbumInfo'
 import DownloadMenuDialog from '../dialogs/DownloadMenuDialog'
+import subsonic from '../subsonic'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -35,12 +36,13 @@ const useStyles = makeStyles(
       flex: '1 0 auto',
     },
     cover: {
-      width: 151,
+      width: '12rem',
+      height: '12rem',
       borderRadius: '6em',
       cursor: 'pointer',
     },
     artistImage: {
-      maxHeight: '9.5rem',
+      maxHeight: '12rem',
       backgroundColor: 'inherit',
       display: 'flex',
       boxShadow: 'none',
@@ -69,9 +71,9 @@ const useStyles = makeStyles(
   { name: 'NDDesktopArtistDetails' }
 )
 
-const DesktopArtistDetails = ({ img, artistInfo, record, biography }) => {
+const DesktopArtistDetails = ({ artistInfo, record, biography }) => {
   const [expanded, setExpanded] = useState(false)
-  const classes = useStyles({ img, expanded })
+  const classes = useStyles()
   const title = record.name
   const [isLightboxOpen, setLightboxOpen] = React.useState(false)
 
@@ -88,7 +90,7 @@ const DesktopArtistDetails = ({ img, artistInfo, record, biography }) => {
           {artistInfo && (
             <CardMedia
               className={classes.cover}
-              image={artistInfo.mediumImageUrl}
+              image={subsonic.getCoverArtUrl(record, 300)}
               onClick={handleOpenLightbox}
               title={title}
             />
@@ -102,16 +104,15 @@ const DesktopArtistDetails = ({ img, artistInfo, record, biography }) => {
               className={classes.artistName}
             >
               {title}
-              {config.enableFavourites && (
-                <ArtistContextMenu
-                  className={classes.contextMenu}
-                  record={record}
-                  resource={'artist'}
-                  size={'default'}
-                  aria-label="artist context menu"
-                  color="primary"
-                />
-              )}
+              <ArtistContextMenu
+                showLove={config.enableFavourites}
+                className={classes.contextMenu}
+                record={record}
+                resource={'artist'}
+                size={'default'}
+                aria-label="artist context menu"
+                color="primary"
+              />
             </Typography>
             {config.enableStarRating && (
               <div>
@@ -146,7 +147,7 @@ const DesktopArtistDetails = ({ img, artistInfo, record, biography }) => {
             imagePadding={50}
             animationDuration={200}
             imageTitle={record.name}
-            mainSrc={artistInfo.largeImageUrl}
+            mainSrc={subsonic.getCoverArtUrl(record)}
             onCloseRequest={handleCloseLightbox}
           />
         )}
