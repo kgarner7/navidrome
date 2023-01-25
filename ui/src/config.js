@@ -29,6 +29,8 @@ const defaultConfig = {
   enableCoverAnimation: true,
   devShowArtistPage: true,
   enableReplayGain: true,
+  defaultDownsamplingFormat: 'opus',
+  publicBaseUrl: '/share',
 }
 
 let config
@@ -41,6 +43,14 @@ try {
   }
 } catch (e) {
   config = defaultConfig
+}
+
+export let shareInfo
+
+try {
+  shareInfo = JSON.parse(window.__SHARE_INFO__)
+} catch (e) {
+  shareInfo = null
 }
 
 export default config
