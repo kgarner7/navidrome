@@ -26,6 +26,7 @@ const defaultConfig = {
   lastFMEnabled: true,
   lastFMApiKey: '9b94a5515ea66b2da3ec03c12300327e',
   listenBrainzEnabled: true,
+  enableExternalServices: true,
   enableCoverAnimation: true,
   devShowArtistPage: true,
   enableReplayGain: true,
