@@ -29,6 +29,8 @@ type configOptions struct {
 	SessionTimeout               time.Duration
 	BaseURL                      string
 	UILoginBackgroundURL         string
+	UIWelcomeMessage             string
+	MaxSidebarPlaylists          int
 	EnableTranscodingConfig      bool
 	EnableDownloads              bool
 	EnableExternalServices       bool
@@ -48,7 +50,6 @@ type configOptions struct {
 	ProbeCommand                 string
 	CoverArtPriority             string
 	CoverJpegQuality             int
-	UIWelcomeMessage             string
 	EnableGravatar               bool
 	EnableFavourites             bool
 	EnableStarRating             bool
@@ -225,6 +226,8 @@ func init() {
 	viper.SetDefault("scanschedule", "@every 1m")
 	viper.SetDefault("baseurl", "")
 	viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)
+	viper.SetDefault("uiwelcomemessage", "")
+	viper.SetDefault("maxsidebarplaylists", consts.DefaultMaxSidebarPlaylists)
 	viper.SetDefault("enabletranscodingconfig", false)
 	viper.SetDefault("transcodingcachesize", "100MB")
 	viper.SetDefault("imagecachesize", "100MB")
@@ -246,7 +249,6 @@ func init() {
 	viper.SetDefault("probecommand", "ffmpeg %s -f ffmetadata")
 	viper.SetDefault("coverartpriority", "cover.*, folder.*, front.*, embedded, external")
 	viper.SetDefault("coverjpegquality", 75)
-	viper.SetDefault("uiwelcomemessage", "")
 	viper.SetDefault("enablegravatar", false)
 	viper.SetDefault("enablefavourites", true)
 	viper.SetDefault("enablestarrating", true)

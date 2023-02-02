@@ -64,7 +64,7 @@ func newArtistReader(ctx context.Context, artwork *artwork, artID model.ArtworkI
 func (a *artistReader) Key() string {
 	hash := md5.Sum([]byte(conf.Server.Agents + conf.Server.Spotify.ID))
 	return fmt.Sprintf(
-		"%s.%x.%t",
+		"%s.%x.%t ",
 		a.cacheKey.Key(),
 		hash,
 		conf.Server.EnableExternalServices,
@@ -80,7 +80,6 @@ func (a *artistReader) Reader(ctx context.Context) (io.ReadCloser, string, error
 		fromArtistFolder(ctx, a.artistFolder, "artist.*"),
 		fromExternalFile(ctx, a.files, "artist.*"),
 		fromArtistExternalSource(ctx, a.artist, a.em),
-		fromArtistPlaceholder(),
 	)
 }
 
