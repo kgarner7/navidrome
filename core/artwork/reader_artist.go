@@ -13,6 +13,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/navidrome/navidrome/conf"
+	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/core"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -42,17 +43,19 @@ func newArtistReader(ctx context.Context, artwork *artwork, artID model.ArtworkI
 		em:     em,
 		artist: *ar,
 	}
-	a.cacheKey.lastUpdate = ar.ExternalInfoUpdatedAt
+	// TODO Find a way to factor in the ExternalUpdateInfoAt in the cache key. Problem is that it can
+	// change _after_ retrieving from external sources, making the key invalid
+	//a.cacheKey.lastUpdate = ar.ExternalInfoUpdatedAt
 	var files []string
 	var paths []string
 	for _, al := range als {
 		files = append(files, al.ImageFiles)
-		paths = append(paths, filepath.SplitList(al.Paths)...)
+		paths = append(paths, splitList(al.Paths)...)
 		if a.cacheKey.lastUpdate.Before(al.UpdatedAt) {
 			a.cacheKey.lastUpdate = al.UpdatedAt
 		}
 	}
-	a.files = strings.Join(files, string(filepath.ListSeparator))
+	a.files = strings.Join(files, consts.Zwsp)
 	a.artistFolder = utils.LongestCommonPrefix(paths)
 	if !strings.HasSuffix(a.artistFolder, string(filepath.Separator)) {
 		a.artistFolder, _ = filepath.Split(a.artistFolder)
@@ -64,10 +67,10 @@ func newArtistReader(ctx context.Context, artwork *artwork, artID model.ArtworkI
 func (a *artistReader) Key() string {
 	hash := md5.Sum([]byte(conf.Server.Agents + conf.Server.Spotify.ID))
 	return fmt.Sprintf(
-		"%s.%x.%t ",
+		"%s.%t.%x",
 		a.cacheKey.Key(),
-		hash,
 		conf.Server.EnableExternalServices,
+		hash,
 	)
 }
 
