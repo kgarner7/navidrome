@@ -97,7 +97,7 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
 
   const onAddToPlaylist = useCallback(
     (pls) => {
-      if (pls.artID === playlistId) {
+      if (pls.id === playlistId) {
         refetch()
       }
     },
@@ -229,7 +229,7 @@ const SanitizedPlaylistSongs = (props) => {
     <>
       {loaded && (
         <PlaylistSongs
-          playlistId={props.artID}
+          playlistId={props.id}
           actions={props.actions}
           pagination={props.pagination}
           {...rest}

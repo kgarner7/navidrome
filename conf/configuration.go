@@ -37,6 +37,7 @@ type configOptions struct {
 	EnableMediaFileCoverArt      bool
 	TranscodingCacheSize         string
 	ImageCacheSize               string
+	EnableArtworkPrecache        bool
 	AutoImportPlaylists          bool
 	PlaylistsPath                string
 	AutoTranscodeDownload        bool
@@ -233,6 +234,7 @@ func init() {
 	viper.SetDefault("enabletranscodingconfig", false)
 	viper.SetDefault("transcodingcachesize", "100MB")
 	viper.SetDefault("imagecachesize", "100MB")
+	viper.SetDefault("enableartworkprecache", true)
 	viper.SetDefault("autoimportplaylists", true)
 	viper.SetDefault("playlistspath", consts.DefaultPlaylistsPath)
 	viper.SetDefault("enabledownloads", true)
@@ -321,6 +323,7 @@ func InitConfig(cfgFile string) {
 	err := viper.ReadInConfig()
 	if viper.ConfigFileUsed() != "" && err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "FATAL: Navidrome could not open config file: ", err)
+		os.Exit(1)
 	}
 }
 
