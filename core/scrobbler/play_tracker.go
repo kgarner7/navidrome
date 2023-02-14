@@ -93,15 +93,11 @@ func (p *playTracker) NowPlaying(ctx context.Context, playerId string, playerNam
 	return nil
 }
 
-func (p *playTracker) dispatchNowPlaying(ctx context.Context, userId string, trackId string) {
-	t, err := p.ds.MediaFile(ctx).Get(trackId)
+func (p *playTracker) dispatchNowPlaying(ctx context.Context, userId string, t *model.MediaFile) {
 	if t.IgnoreScrobble {
 		return
 	}
-	if err != nil {
-		log.Error(ctx, "Error retrieving mediaFile", "id", trackId, err)
-		return
-	}
+
 	if t.Artist == consts.UnknownArtist {
 		log.Debug(ctx, "Ignoring external NowPlaying update for track with unknown artist", "track", t.Title, "artist", t.Artist)
 		return
