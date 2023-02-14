@@ -69,7 +69,8 @@ const Player = () => {
       context === null &&
       audioInstance &&
       config.enableReplayGain &&
-      'AudioContext' in window
+      'AudioContext' in window &&
+      (gainInfo.gainMode === 'album' || gainInfo.gainMode === 'track')
     ) {
       const ctx = new AudioContext({
         latencyHint: 'playback',
@@ -86,7 +87,7 @@ const Player = () => {
       setContext(ctx)
       setGainNode(gain)
     }
-  }, [audioInstance, context])
+  }, [audioInstance, context, gainInfo.gainMode])
 
   useEffect(() => {
     if (gainNode) {
