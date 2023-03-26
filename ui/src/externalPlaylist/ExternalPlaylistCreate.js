@@ -226,7 +226,25 @@ const ExternalPlaylistCreate = (props) => {
     [ids, mutate, notify, redirect, refresh]
   )
 
-  console.log(agents?.length)
+  let formBody
+
+  if (allAgents.length === 0) {
+    formBody = <div>{translate('message.noPlaylistAgent')}</div>
+  } else {
+    formBody = [
+      <SelectInput source="agent" choices={allAgents} onChange={changeAgent} />,
+      <SelectInput source="type" choices={agentKeys} onChange={changeType} />,
+      <BooleanInput source="update" defaultValue={true} />,
+      selectedType && (
+        <ExternalPlaylistSelect
+          filter={{ agent: selectedAgent, type: selectedType }}
+          setIds={setIds}
+          fullWidth
+          ref={clearRef}
+        />
+      ),
+    ]
+  }
 
   return (
     <Create title={<Title subTitle={title} />} {...props}>
@@ -241,31 +259,7 @@ const ExternalPlaylistCreate = (props) => {
           }
           save={save}
         >
-          {allAgents.length === 0 ? (
-            <div>{translate('message.noPlaylistAgent')}</div>
-          ) : (
-            <>
-              <SelectInput
-                source="agent"
-                choices={allAgents}
-                onChange={changeAgent}
-              />
-              <SelectInput
-                source="type"
-                choices={agentKeys}
-                onChange={changeType}
-              />
-              <BooleanInput source="update" defaultValue={true} />
-              {selectedType && (
-                <ExternalPlaylistSelect
-                  filter={{ agent: selectedAgent, type: selectedType }}
-                  setIds={setIds}
-                  fullWidth
-                  ref={clearRef}
-                />
-              )}
-            </>
-          )}
+          {formBody}
         </SimpleForm>
       )}
     </Create>
