@@ -144,6 +144,8 @@ const Admin = (props) => {
 }
 
 const AppWithHotkeys = () => {
+  let language = localStorage.getItem('locale') || 'en'
+  document.documentElement.lang = language
   if (config.enableSharing && shareInfo) {
     return <SharePlayer />
   }
