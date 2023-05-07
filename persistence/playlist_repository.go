@@ -135,7 +135,7 @@ func (r *playlistRepository) Get(id string) (*model.Playlist, error) {
 }
 
 func (r *playlistRepository) GetSyncedPlaylists() (model.Playlists, error) {
-	sel := r.newSelect().Columns("id", "owner_id")
+	sel := r.newSelect().Columns("id", "owner_id").Where(Eq{"external_sync": true})
 	var res model.Playlists
 	err := r.queryAll(sel, &res)
 	if err != nil {
