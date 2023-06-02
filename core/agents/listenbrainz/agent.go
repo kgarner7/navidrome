@@ -277,6 +277,7 @@ func (l *listenBrainzAgent) SyncPlaylist(ctx context.Context, tx model.DataStore
 	comment := agents.StripAllTags.Sanitize(external.Playlist.Annotation)
 
 	pls.Comment = comment
+	pls.Tracks = model.PlaylistTracks{}
 
 	pls.AddMediaFiles(matched_tracks)
 
@@ -370,6 +371,7 @@ func (l *listenBrainzAgent) SyncRecommended(ctx context.Context, userId string) 
 		playlist.ExternalId = id
 		playlist.ExternalUrl = full_pls.Playlist.Identifier
 
+		playlist.Tracks = model.PlaylistTracks{}
 		playlist.AddMediaFiles(matched_tracks)
 		err = tx.Playlist(ctx).Put(playlist)
 
