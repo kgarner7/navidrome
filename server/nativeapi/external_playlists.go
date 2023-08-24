@@ -39,7 +39,7 @@ func replyError(ctx context.Context, w http.ResponseWriter, err error, status in
 	w.Header().Set("Content-Type", "application/json")
 	error := webError{Error: err.Error()}
 	resp, _ := json.Marshal(error)
-	w.Write(resp)
+	_, _ = w.Write(resp)
 }
 
 func replyJson(ctx context.Context, w http.ResponseWriter, data interface{}) {
