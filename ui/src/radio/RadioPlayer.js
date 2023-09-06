@@ -108,27 +108,34 @@ const RadioPlayer = ({
     if (streamUrl) {
       const player = new IcecastMetadataPlayer(streamUrl, {
         onMetadata: (data) => {
-          const split = data.StreamTitle.split(' - ')
+          console.log(data)
+          if (data.StreamTitle) {
+            const split = data.StreamTitle.split(' - ')
 
-          let artist, title
+            let artist, title
 
-          if (split.length === 1) {
-            title = split[0]
-          } else {
-            artist = split[0]
-            title = split.slice(1).join(' - ')
+            if (split.length === 1) {
+              title = split[0]
+            } else {
+              artist = split[0]
+              title = split.slice(1).join(' - ')
+            }
+
+            setMetadata({ artist, title })
           }
-
-          setMetadata({ artist, title })
         },
         onPlay: () => {
           setLoading(false)
           setPlaying(true)
         },
-        icyDetectionTimeout: 10000,
-        enableLogging: false, // set this to true for dev
+        onError: (message, error) => {
+          console.error(message, error)
+        },
+        icyDetectionTimeout: 20000,
+        enableLogging: true, // set this to true for dev
         audioElement: audioRef.current,
         playbackMethod: 'mediasource',
+        // metadataTypes: ['icy'],
       })
 
       player.id = Math.random()

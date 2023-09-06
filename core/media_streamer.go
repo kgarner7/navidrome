@@ -21,6 +21,7 @@ import (
 type MediaStreamer interface {
 	NewStream(ctx context.Context, id string, reqFormat string, reqBitRate int) (*Stream, error)
 	DoStream(ctx context.Context, mf *model.MediaFile, reqFormat string, reqBitRate int) (*Stream, error)
+	ProxyRadio(ctx context.Context, url string) (io.ReadCloser, error)
 }
 
 type TranscodingCache cache.FileCache
@@ -105,6 +106,10 @@ func (ms *mediaStreamer) DoStream(ctx context.Context, mf *model.MediaFile, reqF
 		"selectedBitrate", bitRate, "selectedFormat", format, "cached", cached, "seekable", s.Seekable())
 
 	return s, nil
+}
+
+func (ms *mediaStreamer) ProxyRadio(ctx context.Context, url string) (io.ReadCloser, error) {
+	return ms.transcoder.ProxyRadio(ctx, url)
 }
 
 type Stream struct {

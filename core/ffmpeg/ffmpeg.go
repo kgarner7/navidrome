@@ -19,6 +19,7 @@ type FFmpeg interface {
 	Transcode(ctx context.Context, command, path string, maxBitRate int) (io.ReadCloser, error)
 	ExtractImage(ctx context.Context, path string) (io.ReadCloser, error)
 	Probe(ctx context.Context, files []string) (string, error)
+	ProxyRadio(ctx context.Context, url string) (io.ReadCloser, error)
 	CmdPath() (string, error)
 }
 
@@ -29,6 +30,7 @@ func New() FFmpeg {
 const (
 	extractImageCmd = "ffmpeg -i %s -an -vcodec copy -f image2pipe -"
 	probeCmd        = "ffmpeg %s -f ffmetadata"
+	proxyRadioCmd   = "ffmpeg -icy 1 -i %s -vn -f ogg -"
 )
 
 type ffmpeg struct{}
@@ -46,6 +48,14 @@ func (e *ffmpeg) ExtractImage(ctx context.Context, path string) (io.ReadCloser, 
 		return nil, err
 	}
 	args := createFFmpegCommand(extractImageCmd, path, 0)
+	return e.start(ctx, args)
+}
+
+func (e *ffmpeg) ProxyRadio(ctx context.Context, url string) (io.ReadCloser, error) {
+	if _, err := ffmpegCmd(); err != nil {
+		return nil, err
+	}
+	args := createFFmpegCommand(proxyRadioCmd, url, 0)
 	return e.start(ctx, args)
 }
 

@@ -210,55 +210,55 @@ func (r *radioRepository) refreshLinks(radio *model.Radio) error {
 
 	defer req.Body.Close()
 
-	contentType := strings.TrimSpace(req.Header.Get("Content-Type"))
-	pls, isPlaylist := M3U_TYPES[contentType]
+	// contentType := strings.TrimSpace(req.Header.Get("Content-Type"))
+	// pls, isPlaylist := M3U_TYPES[contentType]
 
-	if !isPlaylist {
-		return nil
-	}
+	// if !isPlaylist {
+	return nil
+	// }
 
-	if req.ContentLength > MAX_PLS_BODY {
-		return ErrLargePlaylistBody
-	}
+	// if req.ContentLength > MAX_PLS_BODY {
+	// 	return ErrLargePlaylistBody
+	// }
 
-	var links *model.RadioLinks
+	// var links *model.RadioLinks
 
-	if pls == M3U {
-		links = r.parseM3u(radio.ID, req)
-	} else {
-		links, err = r.parsePls(radio.ID, req)
-		if err != nil {
-			return err
-		}
-	}
+	// if pls == M3U {
+	// 	links = r.parseM3u(radio.ID, req)
+	// } else {
+	// 	links, err = r.parsePls(radio.ID, req)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	del := Delete("radio_link").Where(Eq{"radio_id": radio.ID})
-	_, err = r.executeSQL(del)
-	if err != nil {
-		return err
-	}
+	// del := Delete("radio_link").Where(Eq{"radio_id": radio.ID})
+	// _, err = r.executeSQL(del)
+	// if err != nil {
+	// 	return err
+	// }
 
-	ins := Insert("radio_link").Columns("id", "name", "radio_id", "url")
+	// ins := Insert("radio_link").Columns("id", "name", "radio_id", "url")
 
-	for _, link := range *links {
-		ins = ins.Values(link.ID, link.Name, link.RadioId, link.Url)
-	}
+	// for _, link := range *links {
+	// 	ins = ins.Values(link.ID, link.Name, link.RadioId, link.Url)
+	// }
 
-	_, err = r.executeSQL(ins)
+	// _, err = r.executeSQL(ins)
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	now := time.Now()
+	// now := time.Now()
 
-	upd := Update(r.tableName).
-		Set("is_playlist", true).
-		Set("updated_at", now).
-		Where(Eq{"id": radio.ID})
+	// upd := Update(r.tableName).
+	// 	Set("is_playlist", true).
+	// 	Set("updated_at", now).
+	// 	Where(Eq{"id": radio.ID})
 
-	_, err = r.executeSQL(upd)
-	return err
+	// _, err = r.executeSQL(upd)
+	// return err
 }
 
 func (r *radioRepository) parseM3u(id string, req *http.Response) *model.RadioLinks {
