@@ -21,6 +21,10 @@ func ParamStringDefault(r *http.Request, param, def string) string {
 	return v
 }
 
+func BodyStrings(r *http.Request, param string) []string {
+	return r.Form[param]
+}
+
 func ParamStrings(r *http.Request, param string) []string {
 	return r.URL.Query()[param]
 }
@@ -54,6 +58,18 @@ func ParamTime(r *http.Request, param string, def time.Time) time.Time {
 		return def
 	}
 	return t
+}
+
+func BodyInt64(r *http.Request, param string, def int64) int64 {
+	v := r.Form.Get(param)
+	if v == "" {
+		return def
+	}
+	value, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return def
+	}
+	return value
 }
 
 func ParamInt(r *http.Request, param string, def int) int {

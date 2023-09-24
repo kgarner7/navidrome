@@ -25,14 +25,15 @@ func NewPlayQueueRepository(ctx context.Context, o orm.QueryExecutor) model.Play
 }
 
 type playQueue struct {
-	ID        string    `structs:"id"       orm:"column(id)"`
-	UserID    string    `structs:"user_id"  orm:"column(user_id)"`
-	Current   string    `structs:"current"`
-	Position  int64     `structs:"position"`
-	ChangedBy string    `structs:"changed_by"`
-	Items     string    `structs:"items"`
-	CreatedAt time.Time `structs:"created_at"`
-	UpdatedAt time.Time `structs:"updated_at"`
+	ID         string    `structs:"id"       orm:"column(id)"`
+	UserID     string    `structs:"user_id"  orm:"column(user_id)"`
+	Current    string    `structs:"current"`
+	QueueIndex int64     `structs:"queue_index"`
+	Position   int64     `structs:"position"`
+	ChangedBy  string    `structs:"changed_by"`
+	Items      string    `structs:"items"`
+	CreatedAt  time.Time `structs:"created_at"`
+	UpdatedAt  time.Time `structs:"updated_at"`
 }
 
 func (r *playQueueRepository) Store(q *model.PlayQueue) error {
@@ -65,13 +66,14 @@ func (r *playQueueRepository) Retrieve(userId string) (*model.PlayQueue, error) 
 
 func (r *playQueueRepository) fromModel(q *model.PlayQueue) playQueue {
 	pq := playQueue{
-		ID:        q.ID,
-		UserID:    q.UserID,
-		Current:   q.Current,
-		Position:  q.Position,
-		ChangedBy: q.ChangedBy,
-		CreatedAt: q.CreatedAt,
-		UpdatedAt: q.UpdatedAt,
+		ID:         q.ID,
+		UserID:     q.UserID,
+		Current:    q.Current,
+		Position:   q.Position,
+		QueueIndex: q.QueueIndex,
+		ChangedBy:  q.ChangedBy,
+		CreatedAt:  q.CreatedAt,
+		UpdatedAt:  q.UpdatedAt,
 	}
 	var itemIDs []string
 	for _, t := range q.Items {
@@ -83,13 +85,14 @@ func (r *playQueueRepository) fromModel(q *model.PlayQueue) playQueue {
 
 func (r *playQueueRepository) toModel(pq *playQueue) model.PlayQueue {
 	q := model.PlayQueue{
-		ID:        pq.ID,
-		UserID:    pq.UserID,
-		Current:   pq.Current,
-		Position:  pq.Position,
-		ChangedBy: pq.ChangedBy,
-		CreatedAt: pq.CreatedAt,
-		UpdatedAt: pq.UpdatedAt,
+		ID:         pq.ID,
+		UserID:     pq.UserID,
+		Current:    pq.Current,
+		Position:   pq.Position,
+		QueueIndex: pq.QueueIndex,
+		ChangedBy:  pq.ChangedBy,
+		CreatedAt:  pq.CreatedAt,
+		UpdatedAt:  pq.UpdatedAt,
 	}
 	if strings.TrimSpace(pq.Items) != "" {
 		tracks := strings.Split(pq.Items, ",")

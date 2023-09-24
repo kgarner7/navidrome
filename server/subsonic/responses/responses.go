@@ -46,6 +46,7 @@ type Subsonic struct {
 	TopSongs      *TopSongs      `xml:"topSongs,omitempty"                                json:"topSongs,omitempty"`
 
 	PlayQueue  *PlayQueue  `xml:"playQueue,omitempty"                                     json:"playQueue,omitempty"`
+	PlayQueue2 *PlayQueue2 `xml:"playQueue2,omitempty"                                     json:"playQueue2,omitempty"`
 	Shares     *Shares     `xml:"shares,omitempty"                                     json:"shares,omitempty"`
 	Bookmarks  *Bookmarks  `xml:"bookmarks,omitempty"                                     json:"bookmarks,omitempty"`
 	ScanStatus *ScanStatus `xml:"scanStatus,omitempty"                                    json:"scanStatus,omitempty"`
@@ -351,6 +352,16 @@ type PlayQueue struct {
 	Username  string     `xml:"username,attr"           json:"username"`
 	Changed   *time.Time `xml:"changed,attr,omitempty"  json:"changed,omitempty"`
 	ChangedBy string     `xml:"changedBy,attr"          json:"changedBy"`
+}
+
+type PlayQueue2 struct {
+	Entry      []Child    `xml:"entry,omitempty"           json:"entry,omitempty"`
+	Current    string     `xml:"current,attr,omitempty"    json:"current,omitempty"`
+	Position   int64      `xml:"position,attr,omitempty"   json:"position,omitempty"`
+	QueueIndex int64      `xml:"queueIndex,attr,omitempty" json:"queueIndex,omitempty"`
+	Username   string     `xml:"username,attr"             json:"username"`
+	Changed    *time.Time `xml:"changed,attr,omitempty"    json:"changed,omitempty"`
+	ChangedBy  string     `xml:"changedBy,attr"            json:"changedBy"`
 }
 
 type Bookmark struct {
