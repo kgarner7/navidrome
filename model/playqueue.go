@@ -21,4 +21,6 @@ type PlayQueues []PlayQueue
 type PlayQueueRepository interface {
 	Store(queue *PlayQueue) error
 	Retrieve(userId string) (*PlayQueue, error)
+	Get(userId string) (*PlayQueue, error)
+	Save(queue *PlayQueue) error
 }

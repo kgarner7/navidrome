@@ -56,11 +56,34 @@ func (r *playQueueRepository) Store(q *model.PlayQueue) error {
 	return nil
 }
 
+func (r *playQueueRepository) Save(q *model.PlayQueue) error {
+	u := loggedUser(r.ctx)
+	pq := r.fromModel(q)
+	if pq.ID == "" {
+		pq.CreatedAt = time.Now()
+	}
+	pq.UpdatedAt = time.Now()
+	_, err := r.put(pq.ID, pq)
+	if err != nil {
+		log.Error(r.ctx, "Error saving playqueue", "user", u.UserName, err)
+		return err
+	}
+	return nil
+}
+
 func (r *playQueueRepository) Retrieve(userId string) (*model.PlayQueue, error) {
 	sel := r.newSelect().Columns("*").Where(Eq{"user_id": userId})
 	var res playQueue
 	err := r.queryOne(sel, &res)
 	pls := r.toModel(&res)
+	return &pls, err
+}
+
+func (r *playQueueRepository) Get(userId string) (*model.PlayQueue, error) {
+	sel := r.newSelect().Columns("*").Where(Eq{"user_id": userId})
+	var res playQueue
+	err := r.queryOne(sel, &res)
+	pls := r.toModelNoTracks(&res)
 	return &pls, err
 }
 
@@ -101,6 +124,26 @@ func (r *playQueueRepository) toModel(pq *playQueue) model.PlayQueue {
 		}
 	}
 	q.Items = r.loadTracks(q.Items)
+	return q
+}
+
+func (r *playQueueRepository) toModelNoTracks(pq *playQueue) model.PlayQueue {
+	q := model.PlayQueue{
+		ID:         pq.ID,
+		UserID:     pq.UserID,
+		Current:    pq.Current,
+		Position:   pq.Position,
+		QueueIndex: pq.QueueIndex,
+		ChangedBy:  pq.ChangedBy,
+		CreatedAt:  pq.CreatedAt,
+		UpdatedAt:  pq.UpdatedAt,
+	}
+	if strings.TrimSpace(pq.Items) != "" {
+		tracks := strings.Split(pq.Items, ",")
+		for _, t := range tracks {
+			q.Items = append(q.Items, model.MediaFile{ID: t})
+		}
+	}
 	return q
 }
 

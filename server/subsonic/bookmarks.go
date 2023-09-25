@@ -188,7 +188,8 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 	}
 
 	err := api.ds.WithTx(func(tx model.DataStore) error {
-		pq, err := tx.PlayQueue(r.Context()).Retrieve(user.ID)
+		repo := tx.PlayQueue(r.Context())
+		pq, err := repo.Get(user.ID)
 		if err != nil {
 			return err
 		}
@@ -208,7 +209,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 			pq.Position = position
 		}
 
-		err = tx.PlayQueue(r.Context()).Store(pq)
+		err = repo.Save(pq)
 		return err
 	})
 
