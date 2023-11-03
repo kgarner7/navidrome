@@ -42,7 +42,8 @@ func CreateNativeAPIRouter() *nativeapi.Router {
 	dataStore := persistence.New(sqlDB)
 	share := core.NewShare(dataStore)
 	playlistRetriever := external_playlists.GetPlaylistRetriever(dataStore)
-	router := nativeapi.New(dataStore, share, playlistRetriever)
+	playlists := core.NewPlaylists(dataStore)
+	router := nativeapi.New(dataStore, share, playlistRetriever, playlists)
 	return router
 }
 

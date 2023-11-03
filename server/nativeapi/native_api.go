@@ -15,13 +15,14 @@ import (
 
 type Router struct {
 	http.Handler
-	ds    model.DataStore
-	share core.Share
-	pls   external_playlists.PlaylistRetriever
+	ds        model.DataStore
+	share     core.Share
+	pls       external_playlists.PlaylistRetriever
+	playlists core.Playlists
 }
 
-func New(ds model.DataStore, share core.Share, pls external_playlists.PlaylistRetriever) *Router {
-	r := &Router{ds: ds, share: share, pls: pls}
+func New(ds model.DataStore, share core.Share, pls external_playlists.PlaylistRetriever, playlists core.Playlists) *Router {
+	r := &Router{ds: ds, share: share, pls: pls, playlists: playlists}
 
 	r.Handler = r.routes()
 	return r
@@ -43,13 +44,13 @@ func (n *Router) routes() http.Handler {
 		n.R(r, "/artist", model.Artist{}, false)
 		n.R(r, "/genre", model.Genre{}, false)
 		n.R(r, "/player", model.Player{}, true)
-		n.R(r, "/playlist", model.Playlist{}, true)
 		n.R(r, "/transcoding", model.Transcoding{}, conf.Server.EnableTranscodingConfig)
 		n.R(r, "/radio", model.Radio{}, true)
 		if conf.Server.EnableSharing {
 			n.RX(r, "/share", n.share.NewRepository, true)
 		}
 
+		n.addPlaylistRoute(r)
 		n.addPlaylistTrackRoute(r)
 
 		n.externalPlaylistRoutes(r)
@@ -83,6 +84,30 @@ func (n *Router) RX(r chi.Router, pathPrefix string, constructor rest.Repository
 				r.Put("/", rest.Put(constructor))
 				r.Delete("/", rest.Delete(constructor))
 			}
+		})
+	})
+}
+
+func (n *Router) addPlaylistRoute(r chi.Router) {
+	constructor := func(ctx context.Context) rest.Repository {
+		return n.ds.Resource(ctx, model.Playlist{})
+	}
+
+	r.Route("/playlist", func(r chi.Router) {
+		r.Get("/", rest.GetAll(constructor))
+		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("Content-type") == "application/json" {
+				rest.Post(constructor)(w, r)
+				return
+			}
+			createPlaylistFromM3U(n.playlists)(w, r)
+		})
+
+		r.Route("/{id}", func(r chi.Router) {
+			r.Use(server.URLParamsMiddleware)
+			r.Get("/", rest.Get(constructor))
+			r.Put("/", rest.Put(constructor))
+			r.Delete("/", rest.Delete(constructor))
 		})
 	})
 }
