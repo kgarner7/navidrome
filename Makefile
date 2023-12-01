@@ -3,7 +3,7 @@ NODE_VERSION=$(shell cat .nvmrc)
 
 ifneq ("$(wildcard .git/HEAD)","")
 GIT_SHA=$(shell git rev-parse --short HEAD)
-GIT_TAG="v0.49.3"
+GIT_TAG="v0.50.1"
 else
 GIT_SHA=source_archive
 GIT_TAG=$(patsubst navidrome-%,v%,$(notdir $(PWD)))
