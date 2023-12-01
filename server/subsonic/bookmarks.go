@@ -43,7 +43,7 @@ func (api *Router) CreateBookmark(r *http.Request) (*responses.Subsonic, error) 
 	}
 
 	comment := utils.ParamString(r, "comment")
-	position := utils.ParamInt64(r, "position", 0)
+	position := utils.ParamInt(r, "position", int64(0))
 
 	repo := api.ds.MediaFile(r.Context())
 	err = repo.AddBookmark(id, comment, position)
@@ -95,7 +95,7 @@ func (api *Router) SavePlayQueue(r *http.Request) (*responses.Subsonic, error) {
 	}
 
 	current := utils.ParamString(r, "current")
-	position := utils.ParamInt64(r, "position", 0)
+	position := utils.ParamInt(r, "position", int64(0))
 
 	user, _ := request.UserFrom(r.Context())
 	client, _ := request.ClientFrom(r.Context())

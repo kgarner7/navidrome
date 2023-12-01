@@ -11,10 +11,13 @@
           "id": "1",
           "isDir": false,
           "title": "title",
-          "genres": [],
           "isVideo": false,
           "bpm": 0,
-          "comment": ""
+          "comment": "",
+          "sortName": "",
+          "mediaType": "",
+          "musicBrainzId": "",
+          "genres": []
         },
         "position": 123,
         "username": "user2",

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/navidrome/navidrome/log"
+	"golang.org/x/exp/constraints"
 )
 
 func ParamString(r *http.Request, param string) string {
@@ -72,19 +73,7 @@ func BodyInt64(r *http.Request, param string, def int64) int64 {
 	return value
 }
 
-func ParamInt(r *http.Request, param string, def int) int {
-	v := ParamString(r, param)
-	if v == "" {
-		return def
-	}
-	value, err := strconv.ParseInt(v, 10, 32)
-	if err != nil {
-		return def
-	}
-	return int(value)
-}
-
-func ParamInt64(r *http.Request, param string, def int64) int64 {
+func ParamInt[T constraints.Integer](r *http.Request, param string, def T) T {
 	v := ParamString(r, param)
 	if v == "" {
 		return def
@@ -93,7 +82,7 @@ func ParamInt64(r *http.Request, param string, def int64) int64 {
 	if err != nil {
 		return def
 	}
-	return value
+	return T(value)
 }
 
 func ParamInts(r *http.Request, param string) []int {

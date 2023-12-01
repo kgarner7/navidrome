@@ -14,7 +14,7 @@ import (
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/criteria"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/navidrome/navidrome/utils/slice"
 )
 
 type playlistRepository struct {
@@ -313,7 +313,7 @@ func (r *playlistRepository) updatePlaylist(playlistId string, mediaFileIds []st
 
 func (r *playlistRepository) addTracks(playlistId string, startingPos int, mediaFileIds []string) error {
 	// Break the track list in chunks to avoid hitting SQLITE_MAX_FUNCTION_ARG limit
-	chunks := utils.BreakUpStringSlice(mediaFileIds, 200)
+	chunks := slice.BreakUp(mediaFileIds, 200)
 
 	// Add new tracks, chunk by chunk
 	pos := startingPos
@@ -506,7 +506,7 @@ func (r *playlistRepository) GetRecommended(userId, agent string) (*model.Playli
 
 func (r *playlistRepository) CheckExternalIds(agent string, ids []string) ([]string, error) {
 	// Break the track list in chunks to avoid hitting SQLITE_MAX_FUNCTION_ARG limit
-	chunks := utils.BreakUpStringSlice(ids, 200)
+	chunks := slice.BreakUp(ids, 200)
 
 	var lists []string
 
