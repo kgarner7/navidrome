@@ -1,16 +1,17 @@
 package migrations
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/pressly/goose/v3"
 )
 
 func init() {
-	goose.AddMigration(upAddIgnoreScrobble, downAddIgnoreScrobble)
+	goose.AddMigrationContext(upAddIgnoreScrobble, downAddIgnoreScrobble)
 }
 
-func upAddIgnoreScrobble(tx *sql.Tx) error {
+func upAddIgnoreScrobble(_ context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`
 alter table media_file
 	add column ignore_scrobble bool default false;
@@ -22,7 +23,7 @@ alter table media_file
 	return forceFullRescan(tx)
 }
 
-func downAddIgnoreScrobble(tx *sql.Tx) error {
+func downAddIgnoreScrobble(_ context.Context, tx *sql.Tx) error {
 	// This code is executed when the migration is rolled back.
 	return nil
 }

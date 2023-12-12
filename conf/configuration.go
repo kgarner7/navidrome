@@ -52,6 +52,7 @@ type configOptions struct {
 	DefaultDownsamplingFormat    string
 	SearchFullString             bool
 	RecentlyAddedByModTime       bool
+	PreferSortTags               bool
 	IgnoredArticles              string
 	IndexGroups                  string
 	SubsonicArtistParticipations bool
@@ -310,6 +311,7 @@ func init() {
 	viper.SetDefault("defaultdownsamplingformat", consts.DefaultDownsamplingFormat)
 	viper.SetDefault("searchfullstring", false)
 	viper.SetDefault("recentlyaddedbymodtime", false)
+	viper.SetDefault("prefersorttags", false)
 	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
 	viper.SetDefault("indexgroups", "A B C D E F G H I J K L M N O P Q R S T U V W X-Z(XYZ) [Unknown]([)")
 	viper.SetDefault("subsonicartistparticipations", false)
@@ -349,8 +351,8 @@ func init() {
 	viper.SetDefault("agents", "lastfm,spotify")
 	viper.SetDefault("lastfm.enabled", true)
 	viper.SetDefault("lastfm.language", "en")
-	viper.SetDefault("lastfm.apikey", consts.LastFMAPIKey)
-	viper.SetDefault("lastfm.secret", consts.LastFMAPISecret)
+	viper.SetDefault("lastfm.apikey", "")
+	viper.SetDefault("lastfm.secret", "")
 	viper.SetDefault("spotify.id", "")
 	viper.SetDefault("spotify.secret", "")
 	viper.SetDefault("listenbrainz.enabled", true)
