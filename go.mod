@@ -22,14 +22,14 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/httprate v0.8.0
 	github.com/go-chi/jwtauth/v5 v5.3.0
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/google/wire v0.5.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kr/pretty v0.3.1
 	github.com/lestrrat-go/jwx/v2 v2.0.18
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/mattn/go-sqlite3 v1.14.18
-	github.com/mattn/go-zglob v0.0.3
+	github.com/mattn/go-zglob v0.0.4
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/mileusna/useragent v1.3.4
 	github.com/onsi/ginkgo/v2 v2.13.2
