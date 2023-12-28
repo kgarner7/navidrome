@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/log"
+	"github.com/navidrome/navidrome/model"
 )
 
 type Extractor interface {
@@ -57,11 +59,37 @@ func Extract(files ...string) (map[string]Tags, error) {
 }
 
 func NewTag(filePath string, fileInfo os.FileInfo, tags ParsedTags) Tags {
+	for t, values := range tags {
+		values = removeDuplicatesAndEmpty(values)
+		if len(values) == 0 {
+			delete(tags, t)
+			continue
+		}
+		tags[t] = values
+	}
 	return Tags{
 		filePath: filePath,
 		fileInfo: fileInfo,
-		tags:     tags,
+		Tags:     tags,
 	}
+}
+
+func removeDuplicatesAndEmpty(values []string) []string {
+	encountered := map[string]struct{}{}
+	empty := true
+	var result []string
+	for _, v := range values {
+		if _, ok := encountered[v]; ok {
+			continue
+		}
+		encountered[v] = struct{}{}
+		empty = empty && v == ""
+		result = append(result, v)
+	}
+	if empty {
+		return nil
+	}
+	return result
 }
 
 type ParsedTags map[string][]string
@@ -84,7 +112,7 @@ func (p ParsedTags) Map(customMappings ParsedTags) ParsedTags {
 type Tags struct {
 	filePath string
 	fileInfo os.FileInfo
-	tags     ParsedTags
+	Tags     ParsedTags
 }
 
 // Common tags
@@ -105,8 +133,47 @@ func (t Tags) OriginalDate() (int, string) { return t.getDate("originaldate") }
 func (t Tags) ReleaseDate() (int, string)  { return t.getDate("releasedate") }
 func (t Tags) Comment() string             { return t.getFirstTagValue("comment") }
 func (t Tags) Lyrics() string {
-	return t.getFirstTagValue("lyrics", "lyrics-eng", "unsynced_lyrics", "unsynced lyrics", "unsyncedlyrics")
+	lyricList := model.LyricList{}
+	basicLyrics := t.getAllTagValues("lyrics", "unsynced_lyrics", "unsynced lyrics", "unsyncedlyrics")
+
+	for _, value := range basicLyrics {
+		lyrics, err := model.ToLyrics("xxx", value)
+		if err != nil {
+			log.Warn("Unexpected failure occurred when parsing lyrics", "file", t.filePath, "error", err)
+			continue
+		}
+
+		lyricList = append(lyricList, *lyrics)
+	}
+
+	for tag, value := range t.Tags {
+		if strings.HasPrefix(tag, "lyrics-") {
+			language := strings.TrimSpace(strings.TrimPrefix(tag, "lyrics-"))
+
+			if language == "" {
+				language = "xxx"
+			}
+
+			for _, text := range value {
+				lyrics, err := model.ToLyrics(language, text)
+				if err != nil {
+					log.Warn("Unexpected failure occurred when parsing lyrics", "file", t.filePath, "error", err)
+					continue
+				}
+
+				lyricList = append(lyricList, *lyrics)
+			}
+		}
+	}
+
+	res, err := json.Marshal(lyricList)
+	if err != nil {
+		log.Warn("Unexpected error occurred when serializing lyrics", "file", t.filePath, "error", err)
+		return ""
+	}
+	return string(res)
 }
+
 func (t Tags) Compilation() bool       { return t.getBool("tcmp", "compilation", "wm/iscompilation") }
 func (t Tags) TrackNumber() (int, int) { return t.getTuple("track", "tracknumber") }
 func (t Tags) DiscNumber() (int, int)  { return t.getTuple("disc", "discnumber") }
@@ -163,7 +230,7 @@ func (t Tags) RGTrackGain() float64 { return t.getGainValue("replaygain_track_ga
 func (t Tags) RGTrackPeak() float64 { return t.getPeakValue("replaygain_track_peak") }
 
 func (t Tags) IgnoreScrobble() bool {
-	_, ok := t.tags["noscrobble"]
+	_, ok := t.Tags["noscrobble"]
 	return ok
 }
 
@@ -196,7 +263,7 @@ func (t Tags) getPeakValue(tagName string) float64 {
 
 func (t Tags) getTags(tagNames ...string) []string {
 	for _, tag := range tagNames {
-		if v, ok := t.tags[tag]; ok {
+		if v, ok := t.Tags[tag]; ok {
 			return v
 		}
 	}
@@ -214,7 +281,7 @@ func (t Tags) getFirstTagValue(tagNames ...string) string {
 func (t Tags) getAllTagValues(tagNames ...string) []string {
 	var values []string
 	for _, tag := range tagNames {
-		if v, ok := t.tags[tag]; ok {
+		if v, ok := t.Tags[tag]; ok {
 			values = append(values, v...)
 		}
 	}

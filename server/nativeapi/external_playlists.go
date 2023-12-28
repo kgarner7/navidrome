@@ -14,7 +14,7 @@ import (
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/navidrome/navidrome/utils/req"
 )
 
 var (
@@ -26,12 +26,13 @@ type webError struct {
 }
 
 func requiredParamString(w *http.ResponseWriter, r *http.Request, param string) (string, bool) {
-	p := utils.ParamString(r, param)
-	if p == "" {
+	p := req.Params(r)
+	param, err := p.String(param)
+	if err != nil {
 		replyError(r.Context(), *w, fmt.Errorf(`required param "%s" is missing`, param), http.StatusBadRequest)
-		return p, false
+		return "", false
 	}
-	return p, true
+	return param, true
 }
 
 func replyError(ctx context.Context, w http.ResponseWriter, err error, status int) {
@@ -66,10 +67,11 @@ func (n *Router) getAgents() http.HandlerFunc {
 func (n *Router) getPlaylists() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		p := req.Params(r)
 		user, _ := request.UserFrom(r.Context())
 
-		start := utils.ParamInt(r, "_start", 0)
-		end := utils.ParamInt(r, "_end", 0)
+		start := p.IntOr("_start", 0)
+		end := p.IntOr("_end", 0)
 
 		if start >= end {
 			replyError(ctx, w, errBadRange, http.StatusBadRequest)

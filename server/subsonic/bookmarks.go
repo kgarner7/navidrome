@@ -8,7 +8,7 @@ import (
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server/subsonic/responses"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/navidrome/navidrome/utils/req"
 )
 
 func (api *Router) GetBookmarks(r *http.Request) (*responses.Subsonic, error) {
@@ -37,13 +37,14 @@ func (api *Router) GetBookmarks(r *http.Request) (*responses.Subsonic, error) {
 }
 
 func (api *Router) CreateBookmark(r *http.Request) (*responses.Subsonic, error) {
-	id, err := requiredParamString(r, "id")
+	p := req.Params(r)
+	id, err := p.String("id")
 	if err != nil {
 		return nil, err
 	}
 
-	comment := utils.ParamString(r, "comment")
-	position := utils.ParamInt(r, "position", int64(0))
+	comment, _ := p.String("comment")
+	position := p.Int64Or("position", 0)
 
 	repo := api.ds.MediaFile(r.Context())
 	err = repo.AddBookmark(id, comment, position)
@@ -54,7 +55,8 @@ func (api *Router) CreateBookmark(r *http.Request) (*responses.Subsonic, error) 
 }
 
 func (api *Router) DeleteBookmark(r *http.Request) (*responses.Subsonic, error) {
-	id, err := requiredParamString(r, "id")
+	p := req.Params(r)
+	id, err := p.String("id")
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +91,14 @@ func (api *Router) GetPlayQueue(r *http.Request) (*responses.Subsonic, error) {
 }
 
 func (api *Router) SavePlayQueue(r *http.Request) (*responses.Subsonic, error) {
-	ids, err := requiredParamStrings(r, "id")
+	p := req.Params(r)
+	ids, err := p.Strings("id")
 	if err != nil {
 		return nil, err
 	}
 
-	current := utils.ParamString(r, "current")
-	position := utils.ParamInt(r, "position", int64(0))
+	current, _ := p.String("current")
+	position := p.Int64Or("position", 0)
 
 	user, _ := request.UserFrom(r.Context())
 	client, _ := request.ClientFrom(r.Context())
@@ -146,8 +149,12 @@ func (api *Router) GetPlayQueueAdvanced(r *http.Request) (*responses.Subsonic, e
 }
 
 func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, error) {
-	ids := utils.BodyStrings(r, "id")
-	queueIdx := utils.BodyInt64(r, "index", 0)
+	p := req.Params(r)
+	ids, err := p.Strings("id")
+	if err != nil {
+		return nil, err
+	}
+	queueIdx := p.Int64Or("index", 0)
 
 	if queueIdx < 0 || (len(ids) > 0 && queueIdx > int64(len(ids))) {
 		return nil, newError(responses.ErrorGeneric, "Index cannot exceed length of queue")
@@ -157,7 +164,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 	client, _ := request.ClientFrom(r.Context())
 
 	if len(ids) > 0 {
-		position := utils.BodyInt64(r, "position", 0)
+		position := p.Int64Or("position", 0)
 
 		var items model.MediaFiles
 		for _, id := range ids {
@@ -187,7 +194,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 		}
 	}
 
-	err := api.ds.WithTx(func(tx model.DataStore) error {
+	err = api.ds.WithTx(func(tx model.DataStore) error {
 		repo := tx.PlayQueue(r.Context())
 		pq, err := repo.Get(user.ID)
 		if err != nil {
@@ -203,7 +210,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 			pq.Current = pq.Items[queueIdx-1].ID
 		}
 
-		position := utils.BodyInt64(r, "position", -1)
+		position := p.Int64Or("position", -1)
 
 		if position != -1 {
 			pq.Position = position

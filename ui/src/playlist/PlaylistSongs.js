@@ -74,7 +74,7 @@ const useStyles = makeStyles(
       visibility: (props) => (props.isDesktop ? 'hidden' : 'visible'),
     },
   }),
-  { name: 'RaList' }
+  { name: 'RaList' },
 )
 
 const ReorderableList = ({ readOnly, children, ...rest }) => {
@@ -101,7 +101,7 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
         refetch()
       }
     },
-    [playlistId, refetch]
+    [playlistId, refetch],
   )
 
   const reorder = useCallback(
@@ -119,7 +119,7 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
           notify('ra.page.error', 'warning')
         })
     },
-    [dataProvider, notify, refetch]
+    [dataProvider, notify, refetch],
   )
 
   const handleDragEnd = useCallback(
@@ -128,7 +128,7 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
       const fromId = ids[from]
       reorder(playlistId, fromId, toId)
     },
-    [playlistId, reorder, ids]
+    [playlistId, reorder, ids],
   )
 
   const toggleableFields = useMemo(() => {

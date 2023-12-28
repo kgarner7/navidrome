@@ -176,7 +176,8 @@ var _ = Describe("Responses", func() {
 					Id: "1", Name: "album", Artist: "artist", Genre: "rock",
 					Genres:        []ItemGenre{{Name: "rock"}, {Name: "progressive"}},
 					MusicBrainzId: "1234", IsCompilation: true, SortName: "sorted album",
-					DiscTitles: DiscTitles{{Disc: 1, Title: "disc 1"}, {Disc: 2, Title: "disc 2"}},
+					DiscTitles:          DiscTitles{{Disc: 1, Title: "disc 1"}, {Disc: 2, Title: "disc 2"}},
+					OriginalReleaseDate: ItemDate{Year: 1994, Month: 2, Day: 4},
 				}
 				t := time.Date(2016, 03, 2, 20, 30, 0, 0, time.UTC)
 				songs := []Child{{
@@ -795,4 +796,69 @@ var _ = Describe("Responses", func() {
 			})
 		})
 	})
+
+	Describe("LyricsList", func() {
+		BeforeEach(func() {
+			response.LyricsList = &LyricsList{}
+		})
+
+		Describe("without data", func() {
+			It("should match .XML", func() {
+				Expect(xml.MarshalIndent(response, "", "  ")).To(MatchSnapshot())
+			})
+			It("should match .JSON", func() {
+				Expect(json.MarshalIndent(response, "", "  ")).To(MatchSnapshot())
+			})
+		})
+
+		Describe("with data", func() {
+			BeforeEach(func() {
+				times := []int64{18800, 22801}
+				offset := int64(100)
+
+				response.LyricsList.StructuredLyrics = StructuredLyrics{
+					{
+						Lang:          "eng",
+						DisplayArtist: "Rick Astley",
+						DisplayTitle:  "Never Gonna Give You Up",
+						Offset:        &offset,
+						Synced:        true,
+						Line: []Line{
+							{
+								Start: &times[0],
+								Value: "We're no strangers to love",
+							},
+							{
+								Start: &times[1],
+								Value: "You know the rules and so do I",
+							},
+						},
+					},
+					{
+						Lang:          "xxx",
+						DisplayArtist: "Rick Astley",
+						DisplayTitle:  "Never Gonna Give You Up",
+						Offset:        &offset,
+						Synced:        false,
+						Line: []Line{
+							{
+								Value: "We're no strangers to love",
+							},
+							{
+								Value: "You know the rules and so do I",
+							},
+						},
+					},
+				}
+			})
+
+			It("should match .XML", func() {
+				Expect(xml.MarshalIndent(response, "", "  ")).To(MatchSnapshot())
+			})
+			It("should match .JSON", func() {
+				Expect(json.MarshalIndent(response, "", "  ")).To(MatchSnapshot())
+			})
+		})
+	})
+
 })

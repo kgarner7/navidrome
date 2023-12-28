@@ -519,7 +519,7 @@ func (r *playlistRepository) CheckExternalIds(agent string, ids []string) ([]str
 		sql := Select("external_id").From(r.tableName).Where(Eq{"external_agent": agent, "external_id": chunk})
 		var partial []string
 
-		err := r.queryAll(sql, &partial)
+		err := r.queryAllSlice(sql, &partial)
 		if err != nil {
 			return nil, err
 		}

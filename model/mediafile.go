@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"mime"
 	"path/filepath"
 	"sort"
@@ -56,7 +57,7 @@ type MediaFile struct {
 	OrderAlbumArtistName string  `structs:"order_album_artist_name" json:"orderAlbumArtistName"`
 	Compilation          bool    `structs:"compilation" json:"compilation"`
 	Comment              string  `structs:"comment" json:"comment,omitempty"`
-	Lyrics               string  `structs:"lyrics" json:"lyrics,omitempty"`
+	Lyrics               string  `structs:"lyrics" json:"lyrics"`
 	Bpm                  int     `structs:"bpm" json:"bpm,omitempty"`
 	CatalogNum           string  `structs:"catalog_num" json:"catalogNum,omitempty"`
 	MbzRecordingID       string  `structs:"mbz_recording_id" json:"mbzRecordingID,omitempty"`
@@ -66,10 +67,10 @@ type MediaFile struct {
 	MbzAlbumArtistID     string  `structs:"mbz_album_artist_id" json:"mbzAlbumArtistId,omitempty"`
 	MbzAlbumType         string  `structs:"mbz_album_type" json:"mbzAlbumType,omitempty"`
 	MbzAlbumComment      string  `structs:"mbz_album_comment" json:"mbzAlbumComment,omitempty"`
-	RGAlbumGain          float64 `structs:"rg_album_gain" json:"rgAlbumGain"`
-	RGAlbumPeak          float64 `structs:"rg_album_peak" json:"rgAlbumPeak"`
-	RGTrackGain          float64 `structs:"rg_track_gain" json:"rgTrackGain"`
-	RGTrackPeak          float64 `structs:"rg_track_peak" json:"rgTrackPeak"`
+	RgAlbumGain          float64 `structs:"rg_album_gain" json:"rgAlbumGain"`
+	RgAlbumPeak          float64 `structs:"rg_album_peak" json:"rgAlbumPeak"`
+	RgTrackGain          float64 `structs:"rg_track_gain" json:"rgTrackGain"`
+	RgTrackPeak          float64 `structs:"rg_track_peak" json:"rgTrackPeak"`
 	IgnoreScrobble       bool    `structs:"ignore_scrobble" json:"ignoreScrobble"`
 
 	CreatedAt time.Time `structs:"created_at" json:"createdAt"` // Time this entry was created in the DB
@@ -91,6 +92,15 @@ func (mf MediaFile) CoverArtID() ArtworkID {
 
 func (mf MediaFile) AlbumCoverArtID() ArtworkID {
 	return artworkIDFromAlbum(Album{ID: mf.AlbumID})
+}
+
+func (mf MediaFile) StructuredLyrics() (LyricList, error) {
+	lyrics := LyricList{}
+	err := json.Unmarshal([]byte(mf.Lyrics), &lyrics)
+	if err != nil {
+		return nil, err
+	}
+	return lyrics, nil
 }
 
 type MediaFiles []MediaFile

@@ -22,6 +22,7 @@ type FFmpeg interface {
 	ConvertToFLAC(ctx context.Context, path string) (io.ReadCloser, error)
 	Probe(ctx context.Context, files []string) (string, error)
 	CmdPath() (string, error)
+	IsAvailable() bool
 }
 
 func New() FFmpeg {
@@ -78,6 +79,11 @@ func (e *ffmpeg) CmdPath() (string, error) {
 	return ffmpegCmd()
 }
 
+func (e *ffmpeg) IsAvailable() bool {
+	_, err := ffmpegCmd()
+	return err == nil
+}
+
 func (e *ffmpeg) start(ctx context.Context, args []string) (io.ReadCloser, error) {
 	log.Trace(ctx, "Executing ffmpeg command", "cmd", args)
 	j := &ffCmd{args: args}
@@ -100,7 +106,7 @@ type ffCmd struct {
 func (j *ffCmd) start() error {
 	cmd := exec.Command(j.args[0], j.args[1:]...) // #nosec
 	cmd.Stdout = j.out
-	if log.CurrentLevel() >= log.LevelTrace {
+	if log.IsGreaterOrEqualTo(log.LevelTrace) {
 		cmd.Stderr = os.Stderr
 	} else {
 		cmd.Stderr = io.Discard
