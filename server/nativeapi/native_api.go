@@ -2,6 +2,8 @@ package nativeapi
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/deluan/rest"
@@ -9,7 +11,9 @@ import (
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/core"
 	"github.com/navidrome/navidrome/core/external_playlists"
+	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
+	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server"
 )
 
@@ -49,6 +53,8 @@ func (n *Router) routes() http.Handler {
 		if conf.Server.EnableSharing {
 			n.RX(r, "/share", n.share.NewRepository, true)
 		}
+
+		r.Get("/queue", n.getPlayQueue)
 
 		n.addPlaylistRoute(r)
 		n.addPlaylistTrackRoute(r)
@@ -135,4 +141,34 @@ func (n *Router) addPlaylistTrackRoute(r chi.Router) {
 			})
 		})
 	})
+}
+
+func (n *Router) getPlayQueue(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user, ok := request.UserFrom(ctx)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	queue, err := n.ds.PlayQueue(ctx).Retrieve(user.ID)
+	if errors.Is(err, model.ErrNotFound) {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(queue)
+	if err != nil {
+		log.Error(ctx, "Error marshalling queue", "userId", user.ID, "queue", queue)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

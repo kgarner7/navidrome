@@ -150,10 +150,7 @@ func (api *Router) GetPlayQueueAdvanced(r *http.Request) (*responses.Subsonic, e
 
 func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, error) {
 	p := req.Params(r)
-	ids, err := p.Strings("id")
-	if err != nil {
-		return nil, err
-	}
+	ids, _ := p.Strings("id")
 	queueIdx := p.Int64Or("index", 0)
 
 	if queueIdx < 0 || (len(ids) > 0 && queueIdx > int64(len(ids))) {
@@ -194,7 +191,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 		}
 	}
 
-	err = api.ds.WithTx(func(tx model.DataStore) error {
+	err := api.ds.WithTx(func(tx model.DataStore) error {
 		repo := tx.PlayQueue(r.Context())
 		pq, err := repo.Get(user.ID)
 		if err != nil {
