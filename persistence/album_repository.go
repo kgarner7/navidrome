@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
 	"github.com/navidrome/navidrome/conf"
+	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/pocketbase/dbx"
@@ -172,6 +174,9 @@ func (r *albumRepository) GetAll(options ...model.QueryOptions) (model.Albums, e
 func (r *albumRepository) toModels(dba []dbAlbum) model.Albums {
 	res := model.Albums{}
 	for i := range dba {
+		if conf.Server.AlbumPlayCountMode == consts.AlbumPlayCountModeNormalized && dba[i].Album.SongCount != 0 {
+			dba[i].Album.PlayCount = int64(math.Round(float64(dba[i].Album.PlayCount) / float64(dba[i].Album.SongCount)))
+		}
 		res = append(res, *dba[i].Album)
 	}
 	return res
