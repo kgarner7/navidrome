@@ -81,6 +81,7 @@ type configOptions struct {
 	PasswordEncryptionKey        string
 	ReverseProxyUserHeader       string
 	ReverseProxyWhitelist        string
+	HTTPSecurityHeaders          secureOptions
 	Prometheus                   prometheusOptions
 	Scanner                      scannerOptions
 	PlaylistSyncSchedule         string
@@ -130,6 +131,10 @@ type spotifyOptions struct {
 type listenBrainzOptions struct {
 	Enabled bool
 	BaseURL string
+}
+
+type secureOptions struct {
+	CustomFrameOptionsValue string
 }
 
 type prometheusOptions struct {
@@ -365,6 +370,7 @@ func init() {
 	viper.SetDefault("listenbrainz.baseurl", "https://api.listenbrainz.org/1/")
 
 	viper.SetDefault("playlistsyncschedule", "")
+	viper.SetDefault("httpsecurityheaders.customframeoptionsvalue", "DENY")
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
