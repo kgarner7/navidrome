@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
 
 	. "github.com/Masterminds/squirrel"
@@ -22,12 +21,10 @@ type albumRepository struct {
 
 type dbAlbum struct {
 	*model.Album `structs:",flatten"`
-	Discs        string  `structs:"-" json:"discs"`
-	PlayCount    float64 `structs:"-" json:"play_count"`
+	Discs        string `structs:"-" json:"discs"`
 }
 
 func (a *dbAlbum) PostScan() error {
-	a.Album.PlayCount = int64(math.Round(a.PlayCount))
 	if a.Discs != "" {
 		return json.Unmarshal([]byte(a.Discs), &a.Album.Discs)
 	}
@@ -85,6 +82,7 @@ func NewAlbumRepository(ctx context.Context, db dbx.Builder) model.AlbumReposito
 		r.sortMappings = map[string]string{
 			"name":           "order_album_name asc, order_album_artist_name asc",
 			"artist":         "compilation asc, order_album_artist_name asc, order_album_name asc",
+			"albumArtist":    "compilation asc, order_album_artist_name asc, order_album_name asc",
 			"max_year":       "coalesce(nullif(original_date,''), cast(max_year as text)), release_date, name, order_album_name asc",
 			"random":         "RANDOM()",
 			"recently_added": recentlyAddedSort(),

@@ -21,10 +21,11 @@ jobs:
         run: git config --global --add safe.directory $GITHUB_WORKSPACE;  git describe --dirty --always --tags
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          problem-matchers: true
           args: --timeout 2m
 
       - name: Install goimports
