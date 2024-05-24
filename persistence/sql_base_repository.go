@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
+	"github.com/navidrome/navidrome/utils/hasher"
 	"github.com/pocketbase/dbx"
 )
 
@@ -137,6 +139,26 @@ func (r sqlRepository) applyFilters(sq SelectBuilder, options ...model.QueryOpti
 	return sq
 }
 
+func (r sqlRepository) seededRandomSort() string {
+	u, _ := request.UserFrom(r.ctx)
+	return fmt.Sprintf("SEEDEDRAND('%s', id)", r.tableName+u.ID)
+}
+
+func (r sqlRepository) resetSeededRandom(options []model.QueryOptions) {
+	if len(options) == 0 || options[0].Sort != "random" {
+		return
+	}
+
+	if options[0].Seed != "" {
+		hasher.SetSeed(r.tableName+userId(r.ctx), options[0].Seed)
+		return
+	}
+
+	if options[0].Offset == 0 {
+		hasher.Reseed(r.tableName + userId(r.ctx))
+	}
+}
+
 func (r sqlRepository) executeSQL(sq Sqlizer) (int64, error) {
 	query, args, err := r.toSQL(sq)
 	if err != nil {
@@ -201,7 +223,7 @@ func (r sqlRepository) queryAll(sq SelectBuilder, response interface{}, options 
 		r.logSQL(query, args, nil, -1, start)
 		return model.ErrNotFound
 	}
-	r.logSQL(query, args, err, -1, start)
+	r.logSQL(query, args, err, int64(reflect.ValueOf(response).Elem().Len()), start)
 	return err
 }
 
@@ -217,7 +239,7 @@ func (r sqlRepository) queryAllSlice(sq SelectBuilder, response interface{}) err
 		r.logSQL(query, args, nil, -1, start)
 		return model.ErrNotFound
 	}
-	r.logSQL(query, args, err, -1, start)
+	r.logSQL(query, args, err, int64(reflect.ValueOf(response).Elem().Len()), start)
 	return err
 }
 

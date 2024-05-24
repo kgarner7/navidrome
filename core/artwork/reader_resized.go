@@ -1,7 +1,6 @@
 package artwork
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"net/http"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -83,54 +81,27 @@ func (a *resizedArtworkReader) Reader(ctx context.Context) (io.ReadCloser, strin
 	return io.NopCloser(resized), fmt.Sprintf("%s@%d", a.artID, a.size), nil
 }
 
-func asImageReader(r io.Reader) (io.Reader, string, error) {
-	br := bufio.NewReader(r)
-	buf, err := br.Peek(512)
-	if err == io.EOF && len(buf) > 0 {
-		// Check if there are enough bytes to detect type
-		typ := http.DetectContentType(buf)
-		if typ != "" {
-			return br, typ, nil
-		}
-	}
-	if err != nil {
-		return nil, "", err
-	}
-	return br, http.DetectContentType(buf), nil
-}
-
 func resizeImage(reader io.Reader, size int) (io.Reader, int, error) {
-	r, format, err := asImageReader(reader)
+	original, format, err := image.Decode(reader)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	img, _, err := image.Decode(r)
-	if err != nil {
-		return nil, 0, err
-	}
+	bounds := original.Bounds()
+	originalSize := max(bounds.Max.X, bounds.Max.Y)
 
 	// Don't upscale the image
-	bounds := img.Bounds()
-	originalSize := max(bounds.Max.X, bounds.Max.Y)
 	if originalSize <= size {
 		return nil, originalSize, nil
 	}
 
-	var m *image.NRGBA
-	// Preserve the aspect ratio of the image.
-	if bounds.Max.X > bounds.Max.Y {
-		m = imaging.Resize(img, size, 0, imaging.Lanczos)
-	} else {
-		m = imaging.Resize(img, 0, size, imaging.Lanczos)
-	}
+	resized := imaging.Fit(original, size, size, imaging.Lanczos)
 
 	buf := new(bytes.Buffer)
-	buf.Reset()
-	if format == "image/png" {
-		err = png.Encode(buf, m)
+	if format == "png" {
+		err = png.Encode(buf, resized)
 	} else {
-		err = jpeg.Encode(buf, m, &jpeg.Options{Quality: conf.Server.CoverJpegQuality})
+		err = jpeg.Encode(buf, resized, &jpeg.Options{Quality: conf.Server.CoverJpegQuality})
 	}
 	return buf, originalSize, err
 }
