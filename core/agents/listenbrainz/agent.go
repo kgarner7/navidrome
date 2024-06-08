@@ -14,8 +14,8 @@ import (
 	"github.com/navidrome/navidrome/core/scrobbler"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils"
 	"github.com/navidrome/navidrome/utils/cache"
+	"github.com/navidrome/navidrome/utils/str"
 )
 
 const (
@@ -160,7 +160,7 @@ func (l *listenBrainzAgent) GetPlaylists(ctx context.Context, offset, count int,
 
 		lists[i] = external_playlists.ExternalPlaylist{
 			Name:        pls.Title,
-			Description: utils.SanitizeText(pls.Annotation),
+			Description: str.SanitizeText(pls.Annotation),
 			Creator:     pls.Creator,
 			ID:          getIdentifier(pls.Identifier),
 			Url:         pls.Identifier,
