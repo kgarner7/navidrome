@@ -241,11 +241,10 @@ func (c *client) path(endpoint string) (string, error) {
 // Note that this is popularity by listen. There is (as of June 15, 2024) no way
 // to limit the output
 func (c *client) getTopSongs(ctx context.Context, mbid string) ([]trackInfo, error) {
-	// Note
 	r := &listenBrainzRequest{}
 	endpoint := fmt.Sprintf("popularity/top-recordings-for-artist/%s", mbid)
 
-	response, err := c.makeRawRequest(ctx, http.MethodGet, endpoint, "", r)
+	response, err := c.makeLbzRequest(ctx, http.MethodGet, endpoint, "", r)
 	if err != nil {
 		return nil, err
 	}
@@ -275,12 +274,39 @@ func (c *client) getTopSongs(ctx context.Context, mbid string) ([]trackInfo, err
 	return tracks, nil
 }
 
-func (c *client) makeRawRequest(ctx context.Context, method string, endpoint string, query string, r *listenBrainzRequest) (*http.Response, error) {
-	uri, err := c.path(endpoint)
+const (
+	labsBase  = "https://labs.api.listenbrainz.org/"
+	algorithm = "session_based_days_9000_session_300_contribution_5_threshold_15_limit_50_skip_30"
+)
+
+type artist struct {
+	MBID string `json:"artist_mbid"`
+	Name string `json:"name"`
+}
+
+func (c *client) getSimilarArtists(ctx context.Context, mbid string) ([]artist, error) {
+	r := &listenBrainzRequest{}
+	url := fmt.Sprintf("%ssimilar-artists/json?artist_mbids=%s&algorithm=%s", labsBase, mbid, algorithm)
+
+	response, err := c.makeRawRequest(ctx, http.MethodGet, url, "", r)
 	if err != nil {
 		return nil, err
 	}
 
+	defer response.Body.Close()
+	decoder := json.NewDecoder(response.Body)
+
+	var artists []artist
+	jsonErr := decoder.Decode(&artists)
+
+	if jsonErr != nil {
+		return nil, jsonErr
+	}
+
+	return artists, nil
+}
+
+func (c *client) makeRawRequest(ctx context.Context, method string, uri string, query string, r *listenBrainzRequest) (*http.Response, error) {
 	if query != "" {
 		uri += query
 	}
@@ -309,8 +335,17 @@ func (c *client) makeRawRequest(ctx context.Context, method string, endpoint str
 	return resp, nil
 }
 
+func (c *client) makeLbzRequest(ctx context.Context, method string, endpoint string, query string, r *listenBrainzRequest) (*http.Response, error) {
+	uri, err := c.path(endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.makeRawRequest(ctx, method, uri, query, r)
+}
+
 func (c *client) makeRequest(ctx context.Context, method string, endpoint string, query string, r *listenBrainzRequest) (*listenBrainzResponse, error) {
-	resp, err := c.makeRawRequest(ctx, method, endpoint, query, r)
+	resp, err := c.makeLbzRequest(ctx, method, endpoint, query, r)
 	if err != nil {
 		return nil, err
 	}

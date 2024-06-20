@@ -417,6 +417,28 @@ func (l *listenBrainzAgent) GetArtistTopSongs(ctx context.Context, id, artistNam
 	return res, nil
 }
 
+func (l *listenBrainzAgent) GetSimilarArtists(ctx context.Context, id, name, mbid string, limit int) ([]agents.Artist, error) {
+	if mbid == "" {
+		return nil, agents.ErrNotFound
+	}
+
+	resp, err := l.client.getSimilarArtists(ctx, mbid)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp) == 0 {
+		return nil, agents.ErrNotFound
+	}
+	var res []agents.Artist
+	for _, a := range resp {
+		res = append(res, agents.Artist{
+			Name: a.Name,
+			MBID: a.MBID,
+		})
+	}
+	return res, nil
+}
+
 func init() {
 	conf.AddHook(func() {
 		if conf.Server.ListenBrainz.Enabled {
@@ -435,4 +457,5 @@ func init() {
 	})
 }
 
+var _ agents.ArtistSimilarRetriever = (*listenBrainzAgent)(nil)
 var _ agents.ArtistTopSongsRetriever = (*listenBrainzAgent)(nil)
