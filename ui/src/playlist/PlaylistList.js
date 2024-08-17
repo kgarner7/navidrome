@@ -159,7 +159,6 @@ const TogglePublicInput = ({ resource, source }) => {
 
 const ToggleAutoImport = ({ resource, source }) => {
   const record = useRecordContext()
-  console.log(record)
   const notify = useNotify()
   const [ToggleAutoImport] = useUpdate(
     resource,
