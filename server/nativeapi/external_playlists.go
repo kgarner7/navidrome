@@ -133,7 +133,7 @@ func (n *Router) fetchPlaylists() http.HandlerFunc {
 		err = n.pls.ImportPlaylists(ctx, plsImport.Update, user.ID, plsImport.Agent, plsImport.Playlists)
 
 		if err != nil {
-			if errors.Is(model.ErrNotAuthorized, err) {
+			if errors.Is(err, model.ErrNotAuthorized) {
 				replyError(ctx, w, err, http.StatusForbidden)
 			} else {
 				replyError(ctx, w, err, http.StatusInternalServerError)

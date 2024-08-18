@@ -130,7 +130,7 @@ func getIdentifier(url string) string {
 func (l *listenBrainzAgent) GetPlaylists(ctx context.Context, offset, count int, userId, playlistType string) (*external_playlists.ExternalPlaylists, error) {
 	token, err := l.sessionKeys.GetWithUser(ctx, userId)
 
-	if errors.Is(agents.ErrNoUsername, err) {
+	if errors.Is(err, agents.ErrNoUsername) {
 		resp, err := l.client.validateToken(ctx, token.Key)
 
 		if err != nil {
@@ -295,7 +295,7 @@ func (l *listenBrainzAgent) SyncPlaylist(ctx context.Context, tx model.DataStore
 func (l *listenBrainzAgent) SyncRecommended(ctx context.Context, userId string) error {
 	token, err := l.sessionKeys.GetWithUser(ctx, userId)
 
-	if errors.Is(agents.ErrNoUsername, err) {
+	if errors.Is(err, agents.ErrNoUsername) {
 		resp, err := l.client.validateToken(ctx, token.Key)
 
 		if err != nil {
