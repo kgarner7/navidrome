@@ -11,7 +11,6 @@ import PlaylistDetails from './PlaylistDetails'
 import PlaylistSongs from './PlaylistSongs'
 import PlaylistActions from './PlaylistActions'
 import { Title, canChangeTracks } from '../common'
-import config from '../config'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -25,23 +24,15 @@ const useStyles = makeStyles(
 )
 
 const PlaylistShowLayout = (props) => {
-  const [showDuplicates, setShowDuplicates] = React.useState(false)
-
   const { loading, ...context } = useShowContext(props)
   const { record } = context
   const classes = useStyles()
 
   const filter = { playlist_id: props.id }
 
-  if (config.enableDuplicateSearch) {
-    filter['duplicate'] = showDuplicates
-  }
-
   return (
     <>
-      {record && (
-        <PlaylistDetails {...context} setShowDuplicates={setShowDuplicates} />
-      )}
+      {record && <PlaylistDetails {...context} />}
       {record && (
         <ReferenceManyField
           {...context}
