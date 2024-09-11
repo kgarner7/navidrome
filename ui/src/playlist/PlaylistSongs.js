@@ -9,7 +9,6 @@ import {
   useVersion,
   useListContext,
   FunctionField,
-  BooleanField,
 } from 'react-admin'
 import clsx from 'clsx'
 import { useDispatch } from 'react-redux'
@@ -32,7 +31,6 @@ import { AlbumLinkField } from '../song/AlbumLinkField'
 import { playTracks } from '../actions'
 import PlaylistSongBulkActions from './PlaylistSongBulkActions'
 import ExpandInfoDialog from '../dialogs/ExpandInfoDialog'
-import config from '../config'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -155,9 +153,6 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
       quality: isDesktop && <QualityInfo source="quality" sortable={false} />,
       channels: isDesktop && <NumberField source="channels" />,
       bpm: isDesktop && <NumberField source="bpm" />,
-      duplicate: config.enableDuplicateSearch && (
-        <BooleanField source="duplicate" />
-      ),
     }
   }, [isDesktop, classes.draggable])
 
@@ -171,7 +166,7 @@ const PlaylistSongs = ({ playlistId, readOnly, actions, ...props }) => {
       'playCount',
       'playDate',
       'albumArtist',
-    ].concat(config.enableDuplicateSearch ? ['duplicate'] : []),
+    ],
   })
 
   return (

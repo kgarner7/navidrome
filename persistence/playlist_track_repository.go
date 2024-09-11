@@ -51,22 +51,6 @@ func (r *playlistRepository) Tracks(playlistId string, refreshSmartPlaylist bool
 }
 
 func (r *playlistTrackRepository) Count(options ...rest.QueryOptions) (int64, error) {
-	if conf.Server.EnableDuplicateSearch {
-		if duplicate, ok := options[0].Filters["duplicate"]; ok {
-			delete(options[0].Filters, "duplicate")
-
-			var builder = Select().
-				Where(Eq{"playlist_id": r.playlistId})
-
-			if duplicate == "true" {
-				builder = builder.PrefixExpr(r.duplicate_cte()).
-					Where("playlist_tracks.id NOT IN non_duplicate AND playlist_tracks.media_file_id in duplicate")
-			}
-
-			return r.count(builder, r.parseRestOptions(options...))
-		}
-	}
-
 	return r.count(Select().Where(Eq{"playlist_id": r.playlistId}), r.parseRestOptions(options...))
 }
 
@@ -180,21 +164,7 @@ func (r *playlistTrackRepository) GetAlbumIDs(options ...model.QueryOptions) ([]
 }
 
 func (r *playlistTrackRepository) ReadAll(options ...rest.QueryOptions) (interface{}, error) {
-	if conf.Server.EnableDuplicateSearch {
-		if duplicate, ok := options[0].Filters["duplicate"]; ok {
-			delete(options[0].Filters, "duplicate")
-
-			result, err := r.GetAllShowingDuplicates(duplicate == "true", r.parseRestOptions(options...))
-
-			options[0].Filters["duplicate"] = duplicate
-
-			return result, err
-		} else {
-			return r.GetAllShowingDuplicates(false, r.parseRestOptions(options...))
-		}
-	} else {
-		return r.GetAll(r.parseRestOptions(options...))
-	}
+	return r.GetAll(r.parseRestOptions(options...))
 }
 
 func (r *playlistTrackRepository) EntityName() string {
