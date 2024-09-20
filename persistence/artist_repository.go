@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/url"
@@ -68,11 +69,13 @@ func NewArtistRepository(ctx context.Context, db dbx.Builder) model.ArtistReposi
 	})
 	if conf.Server.PreferSortTags {
 		r.sortMappings = map[string]string{
-			"name": "COALESCE(NULLIF(sort_artist_name,''),order_artist_name)",
+			"name":       "COALESCE(NULLIF(sort_artist_name,''),order_artist_name)",
+			"starred_at": "starred, starred_at",
 		}
 	} else {
 		r.sortMappings = map[string]string{
-			"name": "order_artist_name",
+			"name":       "order_artist_name",
+			"starred_at": "starred, starred_at",
 		}
 	}
 	return r
@@ -141,7 +144,11 @@ func (r *artistRepository) toModels(dba []dbArtist) model.Artists {
 }
 
 func (r *artistRepository) getIndexKey(a *model.Artist) string {
-	name := strings.ToLower(str.RemoveArticle(a.Name))
+	source := a.Name
+	if conf.Server.PreferSortTags {
+		source = cmp.Or(a.SortArtistName, a.OrderArtistName, source)
+	}
+	name := strings.ToLower(str.RemoveArticle(source))
 	for k, v := range r.indexGroups {
 		key := strings.ToLower(k)
 		if strings.HasPrefix(name, key) {
@@ -153,7 +160,11 @@ func (r *artistRepository) getIndexKey(a *model.Artist) string {
 
 // TODO Cache the index (recalculate when there are changes to the DB)
 func (r *artistRepository) GetIndex() (model.ArtistIndexes, error) {
-	all, err := r.GetAll(model.QueryOptions{Sort: "order_artist_name"})
+	sortColumn := "order_artist_name"
+	if conf.Server.PreferSortTags {
+		sortColumn = "sort_artist_name, order_artist_name"
+	}
+	all, err := r.GetAll(model.QueryOptions{Sort: sortColumn})
 	if err != nil {
 		return nil, err
 	}
