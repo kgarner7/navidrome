@@ -89,6 +89,7 @@ type configOptions struct {
 	Scanner                         scannerOptions
 	PlaylistSyncSchedule            string
 	Jukebox                         jukeboxOptions
+	Backup                          backupOptions
 
 	Agents       string
 	LastFM       lastfmOptions
@@ -102,6 +103,7 @@ type configOptions struct {
 	DevAutoCreateAdminPassword       string
 	DevAutoLoginUsername             string
 	DevActivityPanel                 bool
+	DevActivityPanelUpdateRate       time.Duration
 	DevSidebarPlaylists              bool
 	DevEnableBufferedScrobble        bool
 	DevShowArtistPage                bool
@@ -154,6 +156,12 @@ type jukeboxOptions struct {
 	AdminOnly bool
 }
 
+type backupOptions struct {
+	Count    int
+	Path     string
+	Schedule string
+}
+
 var (
 	Server = &configOptions{}
 	hooks  []func()
@@ -195,6 +203,14 @@ func Load() {
 		Server.DbPath = filepath.Join(Server.DataFolder, consts.DefaultDbPath)
 	}
 
+	if Server.Backup.Path != "" {
+		err = os.MkdirAll(Server.Backup.Path, os.ModePerm)
+		if err != nil {
+			_, _ = fmt.Fprintln(os.Stderr, "FATAL: Error creating backup path:", "path", Server.Backup.Path, err)
+			os.Exit(1)
+		}
+	}
+
 	log.SetLevelString(Server.LogLevel)
 	log.SetLogLevels(Server.DevLogLevels)
 	log.SetLogSourceLine(Server.DevLogSourceLine)
@@ -204,7 +220,11 @@ func Load() {
 		os.Exit(1)
 	}
 
-	if err := validateSchedule(&Server.PlaylistSyncSchedule); err != nil {
+	if err := validatePlaylistSchedule(); err != nil {
+		os.Exit(1)
+	}
+
+	if err := validateBackupSchedule(); err != nil {
 		os.Exit(1)
 	}
 
@@ -265,24 +285,41 @@ func validateScanSchedule() error {
 			log.Warn("Setting ScanSchedule", "schedule", Server.ScanSchedule)
 		}
 	}
-	return validateSchedule(&Server.ScanSchedule)
+
+	var err error
+	Server.ScanSchedule, err = validateSchedule(Server.ScanSchedule, "ScanSchedule")
+	return err
 }
 
-func validateSchedule(schedule *string) error {
-	extracted := *schedule
-	if extracted == "0" || extracted == "" {
-		*schedule = ""
+func validatePlaylistSchedule() error {
+	var err error
+	Server.PlaylistSyncSchedule, err = validateSchedule(Server.PlaylistSyncSchedule, "PlaylistSyncSchedule")
+	return err
+}
+
+func validateBackupSchedule() error {
+	if Server.Backup.Path == "" || Server.Backup.Schedule == "" || Server.Backup.Count == 0 {
+		Server.Backup.Schedule = ""
 		return nil
 	}
-	if _, err := time.ParseDuration(extracted); err == nil {
-		*schedule = "@every " + extracted
+
+	var err error
+	Server.Backup.Schedule, err = validateSchedule(Server.Backup.Schedule, "BackupSchedule")
+	return err
+}
+
+func validateSchedule(schedule, field string) (string, error) {
+	if _, err := time.ParseDuration(schedule); err == nil {
+		schedule = "@every " + schedule
 	}
 	c := cron.New()
-	_, err := c.AddFunc(*schedule, func() {})
+	id, err := c.AddFunc(schedule, func() {})
 	if err != nil {
-		log.Error("Invalid schedule. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", "schedule", *schedule, err)
+		log.Error(fmt.Sprintf("Invalid %s. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", field), "schedule", field, err)
+	} else {
+		c.Remove(id)
 	}
-	return err
+	return schedule, err
 }
 
 // AddHook is used to register initialization code that should run as soon as the config is loaded
@@ -379,12 +416,17 @@ func init() {
 	viper.SetDefault("playlistsyncschedule", "")
 	viper.SetDefault("httpsecurityheaders.customframeoptionsvalue", "DENY")
 
+	viper.SetDefault("backup.path", "")
+	viper.SetDefault("backup.schedule", "")
+	viper.SetDefault("backup.count", 0)
+
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
 	viper.SetDefault("devenableprofiler", false)
 	viper.SetDefault("devautocreateadminpassword", "")
 	viper.SetDefault("devautologinusername", "")
 	viper.SetDefault("devactivitypanel", true)
+	viper.SetDefault("devactivitypanelupdaterate", 300*time.Millisecond)
 	viper.SetDefault("enablesharing", false)
 	viper.SetDefault("shareurl", "")
 	viper.SetDefault("defaultdownloadableshare", false)
