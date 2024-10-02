@@ -286,12 +286,21 @@ func validateScanSchedule() error {
 		}
 	}
 
+	if Server.ScanSchedule == "0" || Server.ScanSchedule == "" {
+		Server.ScanSchedule = ""
+		return nil
+	}
+
 	var err error
 	Server.ScanSchedule, err = validateSchedule(Server.ScanSchedule, "ScanSchedule")
 	return err
 }
 
 func validatePlaylistSchedule() error {
+	if Server.PlaylistSyncSchedule == "" {
+		return nil
+	}
+
 	var err error
 	Server.PlaylistSyncSchedule, err = validateSchedule(Server.PlaylistSyncSchedule, "PlaylistSyncSchedule")
 	return err
