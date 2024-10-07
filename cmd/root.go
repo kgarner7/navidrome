@@ -3,12 +3,14 @@ package cmd
 import (
 	"context"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/hashicorp/go-plugin"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/core"
@@ -21,6 +23,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/navidrome/navidrome/plugins/shared"
 )
 
 var (
@@ -80,6 +84,49 @@ func runNavidrome(ctx context.Context) {
 	g.Go(startPlaybackServer(ctx))
 	g.Go(schedulePeriodicScan(ctx))
 	g.Go(schedulePeriodicBackup(ctx))
+
+	cmd := os.Getenv("KV_PLUGIN")
+
+	if cmd != "" {
+		client := plugin.NewClient(&plugin.ClientConfig{
+			HandshakeConfig: shared.Handshake,
+			Plugins:         shared.PluginMap,
+			Cmd:             exec.Command(cmd),
+			AllowedProtocols: []plugin.Protocol{
+				plugin.ProtocolGRPC,
+			},
+		})
+
+		grpcClient, err := client.Client()
+		if err != nil {
+			panic(err)
+		}
+
+		raw, err := grpcClient.Dispense("kv_grpc")
+		if err != nil {
+			panic(err)
+		}
+
+		kv := raw.(shared.KV)
+		err = kv.Put("1234", []byte("5678"))
+		if err != nil {
+			panic(err)
+		}
+
+		data, err := kv.Get("1234")
+		if err != nil {
+			panic(err)
+		}
+
+		log.Error("Got data", "data", data)
+
+		data, err = kv.Get("1234")
+		if err != nil {
+			panic(err)
+		}
+
+		log.Error("Got data", "data", data)
+	}
 
 	if err := g.Wait(); err != nil {
 		log.Error("Fatal error in Navidrome. Aborting", err)
