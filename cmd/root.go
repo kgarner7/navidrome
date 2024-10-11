@@ -14,7 +14,8 @@ import (
 	"github.com/navidrome/navidrome/core"
 	"github.com/navidrome/navidrome/db"
 	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/plugins/greeting"
+	"github.com/navidrome/navidrome/plugins/grpc"
+	"github.com/navidrome/navidrome/plugins/host"
 	"github.com/navidrome/navidrome/resources"
 	"github.com/navidrome/navidrome/scheduler"
 	"github.com/navidrome/navidrome/server/backgrounds"
@@ -82,17 +83,12 @@ func runNavidrome(ctx context.Context) {
 	g.Go(schedulePeriodicScan(ctx))
 	g.Go(schedulePeriodicBackup(ctx))
 
-	p, err := greeting.NewGreeterPlugin(ctx)
+	plugin, err := host.LoadPlugin(ctx, "plugins/main")
 	if err != nil {
 		panic(err)
 	}
 
-	plugin, err := p.Load(ctx, "plugins/main/main.wasm")
-	if err != nil {
-		panic(err)
-	}
-
-	reply, err := plugin.SayHello(ctx, &greeting.GreetRequest{Name: "potato"})
+	reply, err := plugin.SayHello(ctx, &grpc.GreetRequest{Name: "potato"})
 	if err != nil {
 		panic(err)
 	}

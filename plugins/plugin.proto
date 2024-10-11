@@ -1,0 +1,84 @@
+syntax = "proto3";
+package grpc;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/navidrome/navidrome/plugins/grpc";
+
+enum ErrorType {
+  BadAccess = 0;
+  Other = 1;
+  NotImplemented = 2;
+}
+
+message RpcError {
+  string message = 1;
+  ErrorType type = 2;
+}
+
+// The greeting service definition.
+// go:plugin type=plugin version=1
+service Greeter {
+  // Sends a greeting
+  rpc SayHello(GreetRequest) returns (GreetReply) {}
+  // initializes the plugin
+  rpc Configure(ConfigRequest) returns (google.protobuf.Empty) {}
+}
+
+// The request message containing the user's name.
+message GreetRequest { string name = 1; }
+
+// The reply message containing the greetings
+message GreetReply { string message = 1; }
+
+message ConfigRequest { map<string, string> config = 1; }
+
+// go:plugin type=host version=1
+service HostFunctions {
+  // allows the plugin to make an http request
+  rpc Request(HttpRequest) returns (RpcHttpResponse);
+
+  rpc DoLog(LogRequest) returns (google.protobuf.Empty);
+}
+
+enum LogLevel {
+  Unknown = 0;
+  Error = 2;
+  Warn = 3;
+  Info = 4;
+  Debug = 5;
+  Trace = 6;
+}
+
+message LogRequest {
+  string log = 1;
+  LogLevel level = 2;
+}
+
+enum HttpMethod {
+  GET = 0;
+  HEAD = 1;
+  POST = 2;
+  PUT = 3;
+  PATCH = 4;
+  DELETE = 5;
+  CONNECT = 6;
+  OPTIONS = 7;
+  TRACE = 8;
+}
+
+message HttpRequest {
+  string url = 1;
+  HttpMethod method = 2;
+  optional string body = 3;
+}
+
+message HttpResponse {
+  bytes response = 1;
+  int32 code = 2;
+}
+
+message RpcHttpResponse {
+  optional HttpResponse response = 1;
+  optional RpcError error = 10;
+}

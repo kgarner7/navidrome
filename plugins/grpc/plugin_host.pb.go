@@ -4,20 +4,104 @@
 // versions:
 // 	protoc-gen-go-plugin 0.8.0
 // 	protoc               v5.28.2
-// source: greeting.proto
+// source: plugin.proto
 
-package greeting
+package grpc
 
 import (
 	context "context"
 	errors "errors"
 	fmt "fmt"
-	os "os"
-
+	emptypb "github.com/knqyf263/go-plugin/types/known/emptypb"
+	wasm "github.com/knqyf263/go-plugin/wasm"
 	wazero "github.com/tetratelabs/wazero"
 	api "github.com/tetratelabs/wazero/api"
 	sys "github.com/tetratelabs/wazero/sys"
+	os "os"
 )
+
+const (
+	i32 = api.ValueTypeI32
+	i64 = api.ValueTypeI64
+)
+
+type _hostFunctions struct {
+	HostFunctions
+}
+
+// Instantiate a Go-defined module named "env" that exports host functions.
+func (h _hostFunctions) Instantiate(ctx context.Context, r wazero.Runtime) error {
+	envBuilder := r.NewHostModuleBuilder("env")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._Request), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("request")
+
+	envBuilder.NewFunctionBuilder().
+		WithGoModuleFunction(api.GoModuleFunc(h._DoLog), []api.ValueType{i32, i32}, []api.ValueType{i64}).
+		WithParameterNames("offset", "size").
+		Export("do_log")
+
+	_, err := envBuilder.Instantiate(ctx)
+	return err
+}
+
+// allows the plugin to make an http request
+
+func (h _hostFunctions) _Request(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(HttpRequest)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.Request(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
+
+func (h _hostFunctions) _DoLog(ctx context.Context, m api.Module, stack []uint64) {
+	offset, size := uint32(stack[0]), uint32(stack[1])
+	buf, err := wasm.ReadMemory(m.Memory(), offset, size)
+	if err != nil {
+		panic(err)
+	}
+	request := new(LogRequest)
+	err = request.UnmarshalVT(buf)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := h.DoLog(ctx, request)
+	if err != nil {
+		panic(err)
+	}
+	buf, err = resp.MarshalVT()
+	if err != nil {
+		panic(err)
+	}
+	ptr, err := wasm.WriteMemory(ctx, m, buf)
+	if err != nil {
+		panic(err)
+	}
+	ptrLen := (ptr << uint64(32)) | uint64(len(buf))
+	stack[0] = ptrLen
+}
 
 const GreeterPluginAPIVersion = 1
 
@@ -47,7 +131,7 @@ type greeter interface {
 	Greeter
 }
 
-func (p *GreeterPlugin) Load(ctx context.Context, pluginPath string) (greeter, error) {
+func (p *GreeterPlugin) Load(ctx context.Context, pluginPath string, hostFunctions HostFunctions) (greeter, error) {
 	b, err := os.ReadFile(pluginPath)
 	if err != nil {
 		return nil, err
@@ -56,6 +140,12 @@ func (p *GreeterPlugin) Load(ctx context.Context, pluginPath string) (greeter, e
 	// Create a new runtime so that multiple modules will not conflict
 	r, err := p.newRuntime(ctx)
 	if err != nil {
+		return nil, err
+	}
+
+	h := _hostFunctions{hostFunctions}
+
+	if err := h.Instantiate(ctx, r); err != nil {
 		return nil, err
 	}
 
@@ -96,6 +186,10 @@ func (p *GreeterPlugin) Load(ctx context.Context, pluginPath string) (greeter, e
 	if sayhello == nil {
 		return nil, errors.New("greeter_say_hello is not exported")
 	}
+	configure := module.ExportedFunction("greeter_configure")
+	if configure == nil {
+		return nil, errors.New("greeter_configure is not exported")
+	}
 
 	malloc := module.ExportedFunction("malloc")
 	if malloc == nil {
@@ -107,11 +201,12 @@ func (p *GreeterPlugin) Load(ctx context.Context, pluginPath string) (greeter, e
 		return nil, errors.New("free is not exported")
 	}
 	return &greeterPlugin{
-		runtime:  r,
-		module:   module,
-		malloc:   malloc,
-		free:     free,
-		sayhello: sayhello,
+		runtime:   r,
+		module:    module,
+		malloc:    malloc,
+		free:      free,
+		sayhello:  sayhello,
+		configure: configure,
 	}, nil
 }
 
@@ -123,11 +218,12 @@ func (p *greeterPlugin) Close(ctx context.Context) (err error) {
 }
 
 type greeterPlugin struct {
-	runtime  wazero.Runtime
-	module   api.Module
-	malloc   api.Function
-	free     api.Function
-	sayhello api.Function
+	runtime   wazero.Runtime
+	module    api.Module
+	malloc    api.Function
+	free      api.Function
+	sayhello  api.Function
+	configure api.Function
 }
 
 func (p *greeterPlugin) SayHello(ctx context.Context, request *GreetRequest) (*GreetReply, error) {
@@ -185,6 +281,67 @@ func (p *greeterPlugin) SayHello(ctx context.Context, request *GreetRequest) (*G
 	}
 
 	response := new(GreetReply)
+	if err = response.UnmarshalVT(bytes); err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+func (p *greeterPlugin) Configure(ctx context.Context, request *ConfigRequest) (*emptypb.Empty, error) {
+	data, err := request.MarshalVT()
+	if err != nil {
+		return nil, err
+	}
+	dataSize := uint64(len(data))
+
+	var dataPtr uint64
+	// If the input data is not empty, we must allocate the in-Wasm memory to store it, and pass to the plugin.
+	if dataSize != 0 {
+		results, err := p.malloc.Call(ctx, dataSize)
+		if err != nil {
+			return nil, err
+		}
+		dataPtr = results[0]
+		// This pointer is managed by TinyGo, but TinyGo is unaware of external usage.
+		// So, we have to free it when finished
+		defer p.free.Call(ctx, dataPtr)
+
+		// The pointer is a linear memory offset, which is where we write the name.
+		if !p.module.Memory().Write(uint32(dataPtr), data) {
+			return nil, fmt.Errorf("Memory.Write(%d, %d) out of range of memory size %d", dataPtr, dataSize, p.module.Memory().Size())
+		}
+	}
+
+	ptrSize, err := p.configure.Call(ctx, dataPtr, dataSize)
+	if err != nil {
+		return nil, err
+	}
+
+	resPtr := uint32(ptrSize[0] >> 32)
+	resSize := uint32(ptrSize[0])
+	var isErrResponse bool
+	if (resSize & (1 << 31)) > 0 {
+		isErrResponse = true
+		resSize &^= (1 << 31)
+	}
+
+	// We don't need the memory after deserialization: make sure it is freed.
+	if resPtr != 0 {
+		defer p.free.Call(ctx, uint64(resPtr))
+	}
+
+	// The pointer is a linear memory offset, which is where we write the name.
+	bytes, ok := p.module.Memory().Read(resPtr, resSize)
+	if !ok {
+		return nil, fmt.Errorf("Memory.Read(%d, %d) out of range of memory size %d",
+			resPtr, resSize, p.module.Memory().Size())
+	}
+
+	if isErrResponse {
+		return nil, errors.New(string(bytes))
+	}
+
+	response := new(emptypb.Empty)
 	if err = response.UnmarshalVT(bytes); err != nil {
 		return nil, err
 	}

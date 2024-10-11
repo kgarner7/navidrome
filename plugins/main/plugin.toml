@@ -1,0 +1,5 @@
+
+Name = "Main plugin"
+Description = "A plugin that fetches example.org"
+AllowedUrls = ["https://example.org"]
+Config = { data = "5", potato = 6 }

@@ -4,13 +4,12 @@
 // versions:
 // 	protoc-gen-go-plugin 0.8.0
 // 	protoc               v5.28.2
-// source: greeting.proto
+// source: plugin.proto
 
-package greeting
+package grpc
 
 import (
 	context "context"
-
 	wazero "github.com/tetratelabs/wazero"
 	wasi_snapshot_preview1 "github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
