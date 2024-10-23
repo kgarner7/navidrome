@@ -37,6 +37,8 @@ import config, { shareInfo } from './config'
 import { keyMap } from './hotkeys'
 import useChangeThemeColor from './useChangeThemeColor'
 import SharePlayer from './share/SharePlayer'
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { DndProvider } from 'react-dnd'
 
 const history = createHashHistory()
 
@@ -138,7 +140,9 @@ const AppWithHotkeys = () => {
   }
   return (
     <HotKeys keyMap={keyMap}>
-      <App />
+      <DndProvider backend={HTML5Backend}>
+        <App />
+      </DndProvider>
     </HotKeys>
   )
 }
