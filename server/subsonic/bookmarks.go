@@ -136,7 +136,7 @@ func (api *Router) GetPlayQueueAdvanced(r *http.Request) (*responses.Subsonic, e
 
 	response := newResponse()
 	response.PlayQueue2 = &responses.PlayQueue2{
-		Entry:      childrenFromMediaFiles(r.Context(), pq.Items),
+		Entry:      slice.MapWithArg(pq.Items, r.Context(), childFromMediaFile),
 		Current:    pq.Current,
 		Position:   pq.Position,
 		QueueIndex: pq.QueueIndex,
