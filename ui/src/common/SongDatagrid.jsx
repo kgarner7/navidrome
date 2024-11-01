@@ -91,7 +91,7 @@ const ReleaseRow = forwardRef(
             record={{ id: record.albumId }}
             releaseDate={record.releaseDate}
             showLove={false}
-            className={classes.contextMenu}F
+            className={classes.contextMenu}
             visible={contextAlwaysVisible}
           />
         </TableCell>

@@ -37,7 +37,7 @@ import { ImportButton } from './ImportButton'
 
 const PREFIX = 'RaEmpty'
 
-export const EmptyClasses = {
+const EmptyClasses = {
   message: `${PREFIX}-message`,
   icon: `${PREFIX}-icon`,
   toolbar: `${PREFIX}-toolbar`,

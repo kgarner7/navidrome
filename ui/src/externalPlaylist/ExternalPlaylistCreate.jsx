@@ -266,11 +266,21 @@ const ExternalPlaylistCreate = (props) => {
     formBody = <div>{translate('message.noPlaylistAgent')}</div>
   } else {
     formBody = [
-      <SelectInput key="agent" source="agent" choices={allAgents} onChange={changeAgent} />,
-      <SelectInput key="type" source="type" choices={agentKeys} onChange={changeType} />,
+      <SelectInput
+        key="agent"
+        source="agent"
+        choices={allAgents}
+        onChange={changeAgent}
+      />,
+      <SelectInput
+        key="type"
+        source="type"
+        choices={agentKeys}
+        onChange={changeType}
+      />,
       <BooleanInput key="update" source="update" defaultValue={true} />,
       selectedType && (
-        <ExternalPlaylistSelect 
+        <ExternalPlaylistSelect
           key="sync"
           filter={{ agent: selectedAgent, type: selectedType }}
           setIds={setIds}
