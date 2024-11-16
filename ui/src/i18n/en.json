@@ -407,7 +407,11 @@
     "shareFailure": "Error copying URL %{url} to clipboard",
     "downloadDialogTitle": "Download %{resource} '%{name}' (%{size})",
     "downloadOriginalFormat": "Download in original format",
-    "noPlaylistAgent": "You have no accounts to sync playlists. Please link a ListenBrainz account to proceed."
+    "noPlaylistAgent": "You have no accounts to sync playlists. Please link a ListenBrainz account to proceed.",
+    "playlistSyncConfirmTitle": "Sync from source?",
+    "playlistSyncConfirmBody": "This will replace all tracks in the playlist with remote",
+    "playlistSyncError": "Failed to sync playlist: %{error}",
+    "playlistSyncSuccess": "Successfully synced playlist"
   },
   "menu": {
     "library": "Library",
