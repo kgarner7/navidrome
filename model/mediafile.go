@@ -141,7 +141,6 @@ func (mfs MediaFiles) ToAlbum() Album {
 		a.AlbumArtist = m.AlbumArtist
 		a.AlbumArtistID = m.AlbumArtistID
 		a.SortAlbumName = m.SortAlbumName
-		a.SortArtistName = m.SortArtistName
 		a.SortAlbumArtistName = m.SortAlbumArtistName
 		a.OrderAlbumName = m.OrderAlbumName
 		a.OrderAlbumArtistName = m.OrderAlbumArtistName
@@ -262,11 +261,10 @@ type MediaFileRepository interface {
 	GetAll(options ...QueryOptions) (MediaFiles, error)
 	Search(q string, offset int, size int) (MediaFiles, error)
 	Delete(id string) error
+	FindByPaths(paths []string) (MediaFiles, error)
 
 	// Queries by path to support the scanner, no Annotations or Bookmarks required in the response
 	FindAllByPath(path string) (MediaFiles, error)
-	FindByPath(path string) (*MediaFile, error)
-	FindByPaths(paths []string) (MediaFiles, error)
 	FindPathsRecursively(basePath string) ([]string, error)
 	FindWithMbid(ids []string) (MediaFiles, error)
 	DeleteByPath(path string) (int64, error)
