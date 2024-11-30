@@ -182,10 +182,8 @@ func (t Tags) RGTrackGain() float64 {
 	return t.getGainValue("replaygain_track_gain", "r128_track_gain")
 }
 func (t Tags) RGTrackPeak() float64 { return t.getPeakValue("replaygain_track_peak") }
-func (t Tags) IgnoreScrobble() bool {
-	_, ok := t.Tags["noscrobble"]
-	return ok
-}
+func (t Tags) IgnoreScrobble() bool { return t.getBool("noscrobble") }
+func (t Tags) Explicit() bool       { return t.getBool("rtng", "explicit") }
 
 // File properties
 

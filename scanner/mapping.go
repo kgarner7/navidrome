@@ -78,6 +78,7 @@ func (s MediaFileMapper) ToMediaFile(md metadata.Tags) model.MediaFile {
 	mf.CreatedAt = md.BirthTime()
 	mf.UpdatedAt = md.ModificationTime()
 	mf.IgnoreScrobble = md.IgnoreScrobble()
+	mf.Explicit = md.Explicit()
 
 	return *mf
 }

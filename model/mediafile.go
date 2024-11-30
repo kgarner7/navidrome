@@ -74,6 +74,7 @@ type MediaFile struct {
 	RgTrackGain          float64 `structs:"rg_track_gain" json:"rgTrackGain"`
 	RgTrackPeak          float64 `structs:"rg_track_peak" json:"rgTrackPeak"`
 	IgnoreScrobble       bool    `structs:"ignore_scrobble" json:"ignoreScrobble"`
+	Explicit             bool    `structs:"explicit" json:"explicit"`
 
 	CreatedAt time.Time `structs:"created_at" json:"createdAt"` // Time this entry was created in the DB
 	UpdatedAt time.Time `structs:"updated_at" json:"updatedAt"` // Time of file last update (mtime)
@@ -130,6 +131,7 @@ func (mfs MediaFiles) ToAlbum() Album {
 	originalYears := make([]int, 0, len(mfs))
 	originalDates := make([]string, 0, len(mfs))
 	releaseDates := make([]string, 0, len(mfs))
+	explicit := true
 	for _, m := range mfs {
 		// We assume these attributes are all the same for all songs on an album
 		a.ID = m.AlbumID
@@ -173,6 +175,8 @@ func (mfs MediaFiles) ToAlbum() Album {
 		if m.DiscNumber > 0 {
 			a.Discs.Add(m.DiscNumber, m.DiscSubtitle)
 		}
+
+		explicit = explicit && m.Explicit
 	}
 
 	a.Paths = strings.Join(mfs.Dirs(), consts.Zwsp)
@@ -191,6 +195,7 @@ func (mfs MediaFiles) ToAlbum() Album {
 	slices.Sort(songArtistIds)
 	a.AllArtistIDs = strings.Join(slices.Compact(songArtistIds), " ")
 	a.MbzAlbumID = slice.MostFrequent(mbzAlbumIds)
+	a.Explicit = explicit
 
 	return a
 }
