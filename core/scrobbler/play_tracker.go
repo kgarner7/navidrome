@@ -154,7 +154,12 @@ func (p *playTracker) Submit(ctx context.Context, submissions []Submission) erro
 
 func (p *playTracker) incPlay(ctx context.Context, track *model.MediaFile, timestamp time.Time) error {
 	return p.ds.WithTx(func(tx model.DataStore) error {
-		err := tx.MediaFile(ctx).IncPlayCount(track.ID, timestamp)
+		err := tx.MediaFile(ctx).RecordPlay(track.ID, timestamp)
+		if err != nil {
+			return err
+		}
+
+		err = tx.MediaFile(ctx).IncPlayCount(track.ID, timestamp)
 		if err != nil {
 			return err
 		}
