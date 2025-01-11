@@ -272,8 +272,6 @@ type MediaFileRepository interface {
 	FindWithMbid(ids []string) (MediaFiles, error)
 	DeleteByPath(path string) (int64, error)
 
-	RecordPlay(id string, ts time.Time) error
-
 	AnnotatedRepository
 	BookmarkableRepository
 }

@@ -20,6 +20,7 @@ type MockDataStore struct {
 	MockedUserProps      model.UserPropsRepository
 	MockedScrobbleBuffer model.ScrobbleBufferRepository
 	MockedRadioBuffer    model.RadioRepository
+	MockedStat           model.StatRepository
 }
 
 func (db *MockDataStore) Album(context.Context) model.AlbumRepository {
@@ -131,4 +132,11 @@ func (db *MockDataStore) Resource(ctx context.Context, m interface{}) model.Reso
 
 func (db *MockDataStore) GC(ctx context.Context, rootFolder string) error {
 	return nil
+}
+
+func (db *MockDataStore) Stat(context.Context) model.StatRepository {
+	if db.MockedStat == nil {
+		db.MockedStat = CreateMockStatRepo()
+	}
+	return db.MockedStat
 }

@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	. "github.com/Masterminds/squirrel"
@@ -223,13 +222,6 @@ func (r *mediaFileRepository) EntityName() string {
 
 func (r *mediaFileRepository) NewInstance() interface{} {
 	return &model.MediaFile{}
-}
-
-func (r *mediaFileRepository) RecordPlay(id string, ts time.Time) error {
-	userId := userId(r.ctx)
-	insert := Insert("scrobbles").Columns("file_id", "user_id", "submission_time").Values(id, userId, ts.Unix())
-	_, err := r.executeSQL(insert)
-	return err
 }
 
 var _ model.MediaFileRepository = (*mediaFileRepository)(nil)

@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	errBadRange = errors.New("end must me greater than start")
+	errBadRange = errors.New("end must be greater than start")
 )
 
 type webError struct {
@@ -29,13 +29,13 @@ func requiredParamString(w *http.ResponseWriter, r *http.Request, param string) 
 	p := req.Params(r)
 	param, err := p.String(param)
 	if err != nil {
-		replyError(r.Context(), *w, fmt.Errorf(`required param "%s" is missing`, param), http.StatusBadRequest)
+		replyError(*w, fmt.Errorf(`required param "%s" is missing`, param), http.StatusBadRequest)
 		return "", false
 	}
 	return param, true
 }
 
-func replyError(ctx context.Context, w http.ResponseWriter, err error, status int) {
+func replyError(w http.ResponseWriter, err error, status int) {
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
 	error := webError{Error: err.Error()}
@@ -74,7 +74,7 @@ func (n *Router) getPlaylists() http.HandlerFunc {
 		end := p.IntOr("_end", 0)
 
 		if start >= end {
-			replyError(ctx, w, errBadRange, http.StatusBadRequest)
+			replyError(w, errBadRange, http.StatusBadRequest)
 			return
 		}
 
@@ -93,7 +93,7 @@ func (n *Router) getPlaylists() http.HandlerFunc {
 		lists, err := n.pls.GetPlaylists(ctx, start, count, user.ID, agent, plsType)
 
 		if err != nil {
-			replyError(ctx, w, err, http.StatusInternalServerError)
+			replyError(w, err, http.StatusInternalServerError)
 		} else {
 			w.Header().Set("X-Total-Count", strconv.Itoa(lists.Total))
 
@@ -118,7 +118,7 @@ func (n *Router) fetchPlaylists() http.HandlerFunc {
 		data, err := io.ReadAll(r.Body)
 
 		if err != nil {
-			replyError(ctx, w, err, http.StatusBadRequest)
+			replyError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -126,7 +126,7 @@ func (n *Router) fetchPlaylists() http.HandlerFunc {
 		err = json.Unmarshal(data, &plsImport)
 
 		if err != nil {
-			replyError(ctx, w, err, http.StatusBadRequest)
+			replyError(w, err, http.StatusBadRequest)
 			return
 		}
 
@@ -134,9 +134,9 @@ func (n *Router) fetchPlaylists() http.HandlerFunc {
 
 		if err != nil {
 			if errors.Is(err, model.ErrNotAuthorized) {
-				replyError(ctx, w, err, http.StatusForbidden)
+				replyError(w, err, http.StatusForbidden)
 			} else {
-				replyError(ctx, w, err, http.StatusInternalServerError)
+				replyError(w, err, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -164,7 +164,7 @@ func (n *Router) syncPlaylist() http.HandlerFunc {
 				code = http.StatusInternalServerError
 			}
 
-			replyError(ctx, w, err, code)
+			replyError(w, err, code)
 		} else {
 			replyJson(ctx, w, "")
 		}

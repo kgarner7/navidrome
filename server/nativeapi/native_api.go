@@ -64,6 +64,7 @@ func (n *Router) routes() http.Handler {
 		n.addPlaylistTrackRoute(r)
 
 		n.externalPlaylistRoutes(r)
+		n.stats(r)
 
 		// Keepalive endpoint to be used to keep the session valid (ex: while playing songs)
 		r.Get("/keepalive/*", func(w http.ResponseWriter, r *http.Request) {
