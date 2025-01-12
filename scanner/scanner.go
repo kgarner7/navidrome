@@ -58,6 +58,7 @@ type scanner struct {
 	broker      events.Broker
 	cacheWarmer artwork.CacheWarmer
 	retriever   external_playlists.PlaylistRetriever
+	metrics     metrics.Metrics
 }
 
 type scanStatus struct {
@@ -73,6 +74,7 @@ func GetInstance(
 	cacheWarmer artwork.CacheWarmer,
 	broker events.Broker,
 	retriever external_playlists.PlaylistRetriever,
+	metrics metrics.Metrics,
 ) Scanner {
 	return singleton.GetInstance(func() *scanner {
 		s := &scanner{
@@ -85,6 +87,7 @@ func GetInstance(
 			lock:        &sync.RWMutex{},
 			cacheWarmer: cacheWarmer,
 			retriever:   retriever,
+			metrics:     metrics,
 		}
 		s.loadFolders()
 		return s
@@ -222,10 +225,10 @@ func (s *scanner) RescanAll(ctx context.Context, fullRescan bool) error {
 	}
 	if hasError {
 		log.Error(ctx, "Errors while scanning media. Please check the logs")
-		metrics.WriteAfterScanMetrics(ctx, s.ds, false)
+		s.metrics.WriteAfterScanMetrics(ctx, false)
 		return ErrScanError
 	}
-	metrics.WriteAfterScanMetrics(ctx, s.ds, true)
+	s.metrics.WriteAfterScanMetrics(ctx, true)
 	return nil
 }
 

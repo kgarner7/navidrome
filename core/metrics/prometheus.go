@@ -3,32 +3,59 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"sync"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func WriteInitialMetrics() {
-	getPrometheusMetrics().versionInfo.With(prometheus.Labels{"version": consts.Version}).Set(1)
+type Metrics interface {
+	WriteInitialMetrics(ctx context.Context)
+	WriteAfterScanMetrics(ctx context.Context, success bool)
+	GetHandler() http.Handler
 }
 
-func WriteAfterScanMetrics(ctx context.Context, dataStore model.DataStore, success bool) {
-	processSqlAggregateMetrics(ctx, dataStore, getPrometheusMetrics().dbTotal)
+type metrics struct {
+	ds model.DataStore
+}
+
+func NewPrometheusInstance(ds model.DataStore) Metrics {
+	return &metrics{ds: ds}
+}
+
+func (m *metrics) WriteInitialMetrics(ctx context.Context) {
+	getPrometheusMetrics().versionInfo.With(prometheus.Labels{"version": consts.Version}).Set(1)
+	processSqlAggregateMetrics(ctx, m.ds, getPrometheusMetrics().dbTotal)
+}
+
+func (m *metrics) WriteAfterScanMetrics(ctx context.Context, success bool) {
+	processSqlAggregateMetrics(ctx, m.ds, getPrometheusMetrics().dbTotal)
 
 	scanLabels := prometheus.Labels{"success": strconv.FormatBool(success)}
 	getPrometheusMetrics().lastMediaScan.With(scanLabels).SetToCurrentTime()
 	getPrometheusMetrics().mediaScansCounter.With(scanLabels).Inc()
 }
 
-// Prometheus' metrics requires initialization. But not more than once
-var (
-	prometheusMetricsInstance *prometheusMetrics
-	prometheusOnce            sync.Once
-)
+func (m *metrics) GetHandler() http.Handler {
+	r := chi.NewRouter()
+
+	if conf.Server.Prometheus.Password != "" {
+		r.Use(middleware.BasicAuth("metrics", map[string]string{
+			consts.PrometheusAuthUser: conf.Server.Prometheus.Password,
+		}))
+	}
+	r.Handle("/", promhttp.Handler())
+
+	return r
+}
 
 type prometheusMetrics struct {
 	dbTotal           *prometheus.GaugeVec
@@ -37,19 +64,9 @@ type prometheusMetrics struct {
 	mediaScansCounter *prometheus.CounterVec
 }
 
-func getPrometheusMetrics() *prometheusMetrics {
-	prometheusOnce.Do(func() {
-		var err error
-		prometheusMetricsInstance, err = newPrometheusMetrics()
-		if err != nil {
-			log.Fatal("Unable to create Prometheus metrics instance.", err)
-		}
-	})
-	return prometheusMetricsInstance
-}
-
-func newPrometheusMetrics() (*prometheusMetrics, error) {
-	res := &prometheusMetrics{
+// Prometheus' metrics requires initialization. But not more than once
+var getPrometheusMetrics = sync.OnceValue(func() *prometheusMetrics {
+	instance := &prometheusMetrics{
 		dbTotal: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "db_model_totals",
@@ -79,25 +96,24 @@ func newPrometheusMetrics() (*prometheusMetrics, error) {
 			[]string{"success"},
 		),
 	}
-
-	err := prometheus.DefaultRegisterer.Register(res.dbTotal)
+	err := prometheus.DefaultRegisterer.Register(instance.dbTotal)
 	if err != nil {
-		return nil, fmt.Errorf("unable to register db_model_totals metrics: %w", err)
+		log.Fatal("Unable to create Prometheus metric instance", fmt.Errorf("unable to register db_model_totals metrics: %w", err))
 	}
-	err = prometheus.DefaultRegisterer.Register(res.versionInfo)
+	err = prometheus.DefaultRegisterer.Register(instance.versionInfo)
 	if err != nil {
-		return nil, fmt.Errorf("unable to register navidrome_info metrics: %w", err)
+		log.Fatal("Unable to create Prometheus metric instance", fmt.Errorf("unable to register navidrome_info metrics: %w", err))
 	}
-	err = prometheus.DefaultRegisterer.Register(res.lastMediaScan)
+	err = prometheus.DefaultRegisterer.Register(instance.lastMediaScan)
 	if err != nil {
-		return nil, fmt.Errorf("unable to register media_scan_last metrics: %w", err)
+		log.Fatal("Unable to create Prometheus metric instance", fmt.Errorf("unable to register media_scan_last metrics: %w", err))
 	}
-	err = prometheus.DefaultRegisterer.Register(res.mediaScansCounter)
+	err = prometheus.DefaultRegisterer.Register(instance.mediaScansCounter)
 	if err != nil {
-		return nil, fmt.Errorf("unable to register media_scans metrics: %w", err)
+		log.Fatal("Unable to create Prometheus metric instance", fmt.Errorf("unable to register media_scans metrics: %w", err))
 	}
-	return res, nil
-}
+	return instance
+})
 
 func processSqlAggregateMetrics(ctx context.Context, dataStore model.DataStore, targetGauge *prometheus.GaugeVec) {
 	albumsCount, err := dataStore.Album(ctx).CountAll()
