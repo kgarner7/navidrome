@@ -442,7 +442,10 @@
     "albumList": "Albums",
     "playlists": "Playlists",
     "sharedPlaylists": "Shared Playlists",
-    "about": "About"
+    "about": "About",
+    "stats": {
+      "name": "Statistics"
+    }
   },
   "player": {
     "playListsText": "Play Queue",

@@ -11,10 +11,12 @@ import { makeStyles, MenuItem, ListItemIcon, Divider } from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import InfoIcon from '@material-ui/icons/Info'
 import PersonIcon from '@material-ui/icons/Person'
+import TuneIcon from '@material-ui/icons/Tune'
+import BarChartIcon from '@material-ui/icons/BarChart'
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount'
 import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog } from '../dialogs'
-import PersonalMenu from './PersonalMenu'
+import MenuLink from './MenuLink'
 import ActivityPanel from './ActivityPanel'
 import UserMenu from './UserMenu'
 import config from '../config'
@@ -121,7 +123,20 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
     <>
       {config.devActivityPanel && permissions === 'admin' && <ActivityPanel />}
       <UserMenu {...rest}>
-        <PersonalMenu sidebarIsOpen={true} onClick={onClick} />
+        <MenuLink
+          icon={<TuneIcon />}
+          link="/personal"
+          text="menu.personal.name"
+          sidebarIsOpen={true}
+          onClick={onClick}
+        />
+        <MenuLink
+          icon={<BarChartIcon />}
+          link="/stats"
+          text="menu.stats.name"
+          sidebarIsOpen={true}
+          onClick={onClick}
+        />
         <Divider />
         {renderUserMenuItemLink()}
         {resources

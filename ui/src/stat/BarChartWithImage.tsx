@@ -1,0 +1,102 @@
+import type { AnnotationOptions } from 'chartjs-plugin-annotation'
+import type { Chart, Plugin } from 'chart.js'
+import { useCallback, useMemo, useRef } from 'react'
+import { Bar } from 'react-chartjs-2'
+
+// @ts-expect-error Importing a JS module with no typing. I do not want to fix these types
+import subsonic from '../subsonic'
+import { makeOptions } from './options'
+import { useRedirect } from 'react-admin'
+
+interface Stat {
+  [k: string]: string | number
+  count: number
+}
+
+interface BarChartProps {
+  data: Stat[]
+  labelKey: string
+  title: string
+  route?: (element: Stat) => string
+}
+
+const BarChartWithImage = ({ data, labelKey, title, route }: BarChartProps) => {
+  const heightRef = useRef(0)
+  const barRef = useRef<Chart<'bar', number[], string>>()
+  const redirect = useRedirect()
+
+  const plugin = useCallback(() => {
+    const data: Plugin = {
+      id: 'update-height',
+      beforeDraw: (chart) => {
+        const newHeight = chart
+          .getDatasetMeta(0)
+          .data[0].getProps(['height'], true).height
+
+        if (heightRef.current !== 0 && newHeight !== heightRef.current) {
+          chart.update()
+          heightRef.current = newHeight
+        }
+      },
+    }
+
+    return data
+  }, [])
+
+  const [annotations, values, labels] = useMemo(() => {
+    const annotations: AnnotationOptions<'label'>[] = new Array(data.length)
+    const labels: string[] = new Array(data.length)
+    const values: number[] = new Array(data.length)
+
+    for (const [idx, stat] of data.entries()) {
+      annotations[idx] = {
+        type: 'label',
+        content: (ctx) => {
+          const size = Math.round(
+            ctx.chart.getDatasetMeta(0).data[0].getProps(['height'], true)
+              .height as number,
+          )
+          const img = new Image(size, size)
+          img.src = subsonic.getCoverArtUrl(stat)
+          return img
+        },
+        position: { x: 'start' },
+        xValue: 0,
+        yValue: stat[labelKey],
+      }
+      labels[idx] = stat[labelKey] as string
+      values[idx] = stat.count
+    }
+
+    return [annotations, values, labels]
+  }, [data, labelKey])
+
+  const options = useMemo(() => {
+    const ops = makeOptions(route !== undefined, title, annotations, {
+      custom: plugin,
+    })
+    if (route) {
+      ops!.onClick = (_, element) => {
+        if (element.length > 0) {
+          redirect(route(data[element[0].index]))
+        }
+      }
+    }
+
+    return ops
+  }, [annotations, data, plugin, redirect, route, title])
+
+  return (
+    <Bar
+      ref={barRef}
+      options={options}
+      updateMode="show"
+      data={{
+        datasets: [{ data: values }],
+        labels,
+      }}
+    />
+  )
+}
+
+export default BarChartWithImage

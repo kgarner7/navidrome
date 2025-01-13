@@ -16,6 +16,7 @@ import playlist from './playlist'
 import radio from './radio'
 import share from './share'
 import externalPlaylist from './externalPlaylist'
+import stat from './stat'
 import { Player } from './audioplayer'
 import customRoutes from './routes'
 import {
