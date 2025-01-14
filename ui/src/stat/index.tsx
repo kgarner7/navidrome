@@ -16,13 +16,16 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useState,
 } from 'react'
 import { linkToRecord, Loading } from 'react-admin'
 import { useSelector } from 'react-redux'
+import { useHistory, useLocation } from 'react-router-dom'
 
 // @ts-expect-error importing js model in ts
 import httpClient from '../dataProvider/httpClient'
+
 import BarChartWithImage from './BarChartWithImage'
 import BarChartWithoutImage from './BarChartWithoutImage'
 import BufferedNumberInput from './BufferedNumberInput'
@@ -57,31 +60,55 @@ const Stat = () => {
   const [stats, setStats] = useState([])
   const [width, setWidth] = useState<number | undefined>()
   const theme = useTheme()
-  const [start, setStart] = useState(
-    format(addDays(new Date(), -7), MUI_DATE_FORMAT),
-  )
-  const [end, setEnd] = useState(format(new Date(), MUI_DATE_FORMAT))
+
   // @ts-expect-error admin does in fact exist. THis is ra-admin
   const open = useSelector((state) => state.admin.ui.sidebarOpen)
-  const [count, setCount] = useState(5)
   const classes = useStyles()
 
+  const history = useHistory()
+  const { search } = useLocation()
+  // @ts-expect-error activity is a react-admin prop
+  const refreshData = useSelector((state) => state?.activity?.refresh)
+
+  const state = useMemo(() => {
+    const params = new URLSearchParams(search)
+    const start =
+      params.get('start') || format(addDays(new Date(), -7), MUI_DATE_FORMAT)
+    const end = params.get('end') || format(new Date(), MUI_DATE_FORMAT)
+    const count = params.has('count') ? params.get('count')! : '5'
+
+    return { start, end, count }
+  }, [search])
+
+  const setParam = useCallback(
+    (k: keyof typeof state, val: string) => {
+      const search = new URLSearchParams({
+        ...state,
+        [k]: val,
+      })
+      history.replace({ pathname: '/stats', search: search.toString() })
+    },
+    [history, state],
+  )
+
   const fetchData = useCallback(async () => {
-    const startMs = parse(start, MUI_DATE_FORMAT, new Date()).getTime()
-    const endMs = endOfDay(parse(end, MUI_DATE_FORMAT, new Date())).getTime()
+    const startMs = parse(state.start, MUI_DATE_FORMAT, new Date()).getTime()
+    const endMs = endOfDay(
+      parse(state.end, MUI_DATE_FORMAT, new Date()),
+    ).getTime()
 
     const toFetch = BASE_TO_FETCH.map((item) =>
       httpClient(
-        `/api/stats/${item}?from=${startMs}&to=${endMs}&_start=0&_end=${count}`,
+        `/api/stats/${item}?from=${startMs}&to=${endMs}&_start=0&_end=${state.count}`,
       ).then((resp: { json: unknown }) => resp.json),
     )
     const data = await Promise.all(toFetch)
     setStats(data)
-  }, [count, end, start])
+  }, [state.count, state.end, state.start])
 
   useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [fetchData, refreshData])
 
   useLayoutEffect(() => {
     Chart.defaults.color = theme.palette.text.primary
@@ -93,12 +120,12 @@ const Stat = () => {
       const sidebar = document.querySelector('.MuiDrawer-root')
       if (sidebar) {
         if (open) {
-          setWidth(window.screen.width - 240 - 30)
+          setWidth(window.screen.width - 240 - 60)
         } else {
-          setWidth(window.screen.width - 55 - 30)
+          setWidth(window.screen.width - 55 - 60)
         }
       } else {
-        setWidth(window.screen.width - 30)
+        setWidth(window.screen.width - 60)
       }
     }
 
@@ -123,9 +150,9 @@ const Stat = () => {
             variant="filled"
             label="Start date"
             type="date"
-            value={start}
-            inputProps={{ max: end }}
-            onChange={(elem) => setStart(elem.currentTarget.value)}
+            value={state.start}
+            inputProps={{ max: state.end }}
+            onChange={(elem) => setParam('start', elem.currentTarget.value)}
           />
         </Grid>
         <Grid item xs>
@@ -134,13 +161,16 @@ const Stat = () => {
             variant="filled"
             label="End date"
             type="date"
-            value={end}
-            inputProps={{ min: start }}
-            onChange={(elem) => setEnd(elem.currentTarget.value)}
+            value={state.end}
+            inputProps={{ min: state.start }}
+            onChange={(elem) => setParam('end', elem.currentTarget.value)}
           />
         </Grid>
         <Grid item xs>
-          <BufferedNumberInput value={count} setValue={setCount} />
+          <BufferedNumberInput
+            value={Number(state.count)}
+            setValue={(value) => setParam('count', value.toString())}
+          />
         </Grid>
       </Grid>
 

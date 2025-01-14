@@ -73,10 +73,11 @@ const BarChartWithImage = ({ data, labelKey, title, route }: BarChartProps) => {
 
   const options = useMemo(() => {
     const ops = makeOptions(route !== undefined, title, annotations, {
+      // @ts-expect-error custom plugins are exported
       custom: plugin,
-    })
+    })!
     if (route) {
-      ops!.onClick = (_, element) => {
+      ops.onClick = (_, element) => {
         if (element.length > 0) {
           redirect(route(data[element[0].index]))
         }
