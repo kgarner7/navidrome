@@ -16,18 +16,27 @@ interface Stat {
 
 interface BarChartProps {
   count: number
-  labelKey: string
   from: number
   title: string
   to: number
-  type: string
+  type: 'album' | 'artist' | 'song'
   route?: (element: Stat) => string
+}
+
+const augmentStat = (type: BarChartProps['type'], stat: object) => {
+  switch (type) {
+    case 'song':
+      return { album: 1, ...stat }
+    case 'album':
+      return { artist: 1, ...stat }
+    case 'artist':
+      return stat
+  }
 }
 
 const BarChartWithImage = ({
   count,
   from,
-  labelKey,
   title,
   to,
   type,
@@ -71,19 +80,19 @@ const BarChartWithImage = ({
               .height as number,
           )
           const img = new Image(size, size)
-          img.src = subsonic.getCoverArtUrl(stat)
+          img.src = subsonic.getCoverArtUrl(augmentStat(type, stat))
           return img
         },
         position: { x: 'start' },
         xValue: 0,
-        yValue: stat[labelKey],
+        yValue: stat.name,
       }
-      labels[idx] = stat[labelKey] as string
+      labels[idx] = stat.name as string
       values[idx] = stat.count
     }
 
     return [annotations, values, labels]
-  }, [data, labelKey])
+  }, [data, type])
 
   const options = useMemo(() => {
     const ops = makeOptions(route !== undefined, title, annotations, {

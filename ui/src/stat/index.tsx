@@ -169,7 +169,6 @@ const Stat = () => {
         from={startTs}
         to={endTs}
         type="album"
-        labelKey="name"
         title="Top albums"
         route={(elem) => linkToRecord('album', elem.id, 'show')}
       />
@@ -178,7 +177,6 @@ const Stat = () => {
         from={startTs}
         to={endTs}
         type="artist"
-        labelKey="name"
         title="Top artists"
         route={(elem) => linkToRecord('artist', elem.id, 'show')}
       />
@@ -187,7 +185,6 @@ const Stat = () => {
         from={startTs}
         to={endTs}
         type="song"
-        labelKey="title"
         title="Top songs"
       />
       <GenreChart count={count} from={startTs} to={endTs} />

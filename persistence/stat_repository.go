@@ -37,71 +37,49 @@ func (r *statRepository) baseSelect(from time.Time, to time.Time, ops ...model.Q
 	return sel
 }
 
-type dbAlbumStat struct {
-	dbAlbum
-	model.Stat
-}
-
-func (r *statRepository) AlbumStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.AlbumStats, error) {
+func (r *statRepository) AlbumStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
 	sel := r.baseSelect(from, to, ops...).
-		Column("a.*").
+		Columns("a.id", "a.name").
 		Join("album a on a.id = f.album_id").
 		GroupBy("a.id")
 
-	var stat []dbAlbumStat
+	var stat model.Stats
 	err := r.queryAll(sel, &stat)
 
-	res := make(model.AlbumStats, len(stat))
-	for i := range stat {
-		res[i].Count = stat[i].Count
-		res[i].Album = *stat[i].Album
-	}
-
-	return res, err
+	return stat, err
 }
 
-type dbArtistStat struct {
-	dbArtist
-	model.Stat
-}
-
-func (r *statRepository) ArtistStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.ArtistStats, error) {
+func (r *statRepository) ArtistStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
 	sel := r.baseSelect(from, to, ops...).
-		Column("a.*").
+		Columns("a.id", "a.name").
 		Join("artist a on a.id = f.artist_id").
 		GroupBy("a.id")
 
-	var stat []dbArtistStat
+	var stat model.Stats
 	err := r.queryAll(sel, &stat)
 
-	res := make(model.ArtistStats, len(stat))
-	for i := range stat {
-		res[i].Count = stat[i].Count
-		res[i].Artist = *stat[i].Artist
-	}
-
-	return res, err
+	return stat, err
 }
 
 // GenreStats implements model.StatRepository.
-func (r *statRepository) GenreStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.GenreStats, error) {
+func (r *statRepository) GenreStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
 	sel := r.baseSelect(from, to, ops...).
-		Column("g.*").
+		Columns("g.id", "g.name").
 		Join("media_file_genres mg ON mg.media_file_id = f.id").
 		Join("genre g ON g.id = mg.genre_id").
 		GroupBy("g.id")
 
-	var res model.GenreStats
+	var res model.Stats
 	err := r.queryAll(sel, &res)
 	return res, err
 }
 
-func (r *statRepository) SongStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.SongStats, error) {
+func (r *statRepository) SongStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
 	sel := r.baseSelect(from, to, ops...).
-		Column("f.*").
+		Columns("f.id", "f.title name").
 		GroupBy("f.id")
 
-	var res model.SongStats
+	var res model.Stats
 	err := r.queryAll(sel, &res)
 
 	return res, err
