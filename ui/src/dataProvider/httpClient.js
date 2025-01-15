@@ -9,6 +9,10 @@ const clientUniqueIdHeader = 'X-ND-Client-Unique-Id'
 const clientUniqueId = uuidv4()
 
 const httpClient = (url, options = {}) => {
+  if (url.substring(5, 10) == 'stats') {
+    url = url.substring(0, url.length - 1)
+  }
+
   url = baseUrl(url)
   if (!options.headers) {
     options.headers = new Headers({ Accept: 'application/json' })

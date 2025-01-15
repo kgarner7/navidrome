@@ -14,12 +14,11 @@ import { addDays, endOfDay, format, parse } from 'date-fns'
 import {
   createRef,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
 } from 'react'
-import { linkToRecord, Loading } from 'react-admin'
+import { linkToRecord } from 'react-admin'
 import { useSelector } from 'react-redux'
 import { useHistory, useLocation } from 'react-router-dom'
 
@@ -27,7 +26,7 @@ import { useHistory, useLocation } from 'react-router-dom'
 import httpClient from '../dataProvider/httpClient'
 
 import BarChartWithImage from './BarChartWithImage'
-import BarChartWithoutImage from './BarChartWithoutImage'
+import GenreChart from './GenreChart'
 import BufferedNumberInput from './BufferedNumberInput'
 
 Chart.register(
@@ -46,7 +45,6 @@ Chart.defaults.plugins.title.font = {
   ...Chart.defaults.plugins.title.font,
 }
 
-const BASE_TO_FETCH = ['album', 'artist', 'genre', 'song']
 const MUI_DATE_FORMAT = 'yyyy-MM-dd'
 
 const useStyles = makeStyles({
@@ -57,7 +55,6 @@ const useStyles = makeStyles({
 
 const Stat = () => {
   const cardRef = createRef<HTMLDivElement>()
-  const [stats, setStats] = useState([])
   const [width, setWidth] = useState<number | undefined>()
   const theme = useTheme()
 
@@ -70,45 +67,42 @@ const Stat = () => {
   // @ts-expect-error activity is a react-admin prop
   const refreshData = useSelector((state) => state?.activity?.refresh)
 
-  const state = useMemo(() => {
+  const [start, end, count] = useMemo(() => {
     const params = new URLSearchParams(search)
-    const start =
-      params.get('start') || format(addDays(new Date(), -7), MUI_DATE_FORMAT)
-    const end = params.get('end') || format(new Date(), MUI_DATE_FORMAT)
-    const count = params.has('count') ? params.get('count')! : '5'
+    const now = new Date()
 
-    return { start, end, count }
+    const start = params.has('start')
+      ? parse(params.get('start')!, MUI_DATE_FORMAT, now)
+      : addDays(now, -7)
+    const end = params.has('end')
+      ? parse(params.get('end')!, MUI_DATE_FORMAT, now)
+      : now
+    const count = params.has('count') ? Number(params.get('count')) : 5
+
+    return [start, end, count]
   }, [search])
 
+  const [startTs, startFormat, endTs, endFormat] = useMemo(() => {
+    return [
+      start.getTime(),
+      format(start, MUI_DATE_FORMAT),
+      endOfDay(end).getTime(),
+      format(end, MUI_DATE_FORMAT),
+    ]
+  }, [end, start])
+
   const setParam = useCallback(
-    (k: keyof typeof state, val: string) => {
+    (k: 'start' | 'end' | 'count', val: string) => {
       const search = new URLSearchParams({
-        ...state,
+        start: startFormat,
+        end: endFormat,
+        count: count.toString(),
         [k]: val,
       })
       history.replace({ pathname: '/stats', search: search.toString() })
     },
-    [history, state],
+    [count, endFormat, history, startFormat],
   )
-
-  const fetchData = useCallback(async () => {
-    const startMs = parse(state.start, MUI_DATE_FORMAT, new Date()).getTime()
-    const endMs = endOfDay(
-      parse(state.end, MUI_DATE_FORMAT, new Date()),
-    ).getTime()
-
-    const toFetch = BASE_TO_FETCH.map((item) =>
-      httpClient(
-        `/api/stats/${item}?from=${startMs}&to=${endMs}&_start=0&_end=${state.count}`,
-      ).then((resp: { json: unknown }) => resp.json),
-    )
-    const data = await Promise.all(toFetch)
-    setStats(data)
-  }, [state.count, state.end, state.start])
-
-  useEffect(() => {
-    fetchData()
-  }, [fetchData, refreshData])
 
   useLayoutEffect(() => {
     Chart.defaults.color = theme.palette.text.primary
@@ -137,10 +131,6 @@ const Stat = () => {
     }
   }, [cardRef, open])
 
-  if (stats.length === 0) {
-    return <Loading />
-  }
-
   return (
     <Card className={classes.card} style={{ width }}>
       <Grid container spacing={2}>
@@ -150,8 +140,8 @@ const Stat = () => {
             variant="filled"
             label="Start date"
             type="date"
-            value={state.start}
-            inputProps={{ max: state.end }}
+            value={startFormat}
+            inputProps={{ max: endFormat }}
             onChange={(elem) => setParam('start', elem.currentTarget.value)}
           />
         </Grid>
@@ -161,37 +151,46 @@ const Stat = () => {
             variant="filled"
             label="End date"
             type="date"
-            value={state.end}
-            inputProps={{ min: state.start }}
+            value={endFormat}
+            inputProps={{ min: startFormat }}
             onChange={(elem) => setParam('end', elem.currentTarget.value)}
           />
         </Grid>
         <Grid item xs>
           <BufferedNumberInput
-            value={Number(state.count)}
+            value={count}
             setValue={(value) => setParam('count', value.toString())}
           />
         </Grid>
       </Grid>
 
       <BarChartWithImage
-        data={stats[0]}
+        count={count}
+        from={startTs}
+        to={endTs}
+        type="album"
         labelKey="name"
         title="Top albums"
         route={(elem) => linkToRecord('album', elem.id, 'show')}
       />
       <BarChartWithImage
-        data={stats[1]}
+        count={count}
+        from={startTs}
+        to={endTs}
+        type="artist"
         labelKey="name"
         title="Top artists"
         route={(elem) => linkToRecord('artist', elem.id, 'show')}
       />
-      <BarChartWithImage data={stats[3]} labelKey="title" title="Top songs" />
-      <BarChartWithoutImage
-        data={stats[2]}
-        labelKey="name"
-        title="Top genres"
+      <BarChartWithImage
+        count={count}
+        from={startTs}
+        to={endTs}
+        type="song"
+        labelKey="title"
+        title="Top songs"
       />
+      <GenreChart count={count} from={startTs} to={endTs} />
     </Card>
   )
 }

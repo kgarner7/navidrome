@@ -26,8 +26,8 @@ func (n *Router) getStats(stat statType) http.HandlerFunc {
 
 		from := p.TimeOr("from", time.Now().Add(-7*24*time.Hour))
 		to := p.TimeOr("to", time.Now())
-		start := p.IntOr("_start", 0)
-		end := p.IntOr("_end", start+5)
+		start := p.IntOr("start", 0)
+		end := p.IntOr("end", start+5)
 
 		var data interface{}
 		var err error

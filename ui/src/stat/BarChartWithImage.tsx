@@ -1,12 +1,13 @@
 import type { AnnotationOptions } from 'chartjs-plugin-annotation'
 import type { Chart, Plugin } from 'chart.js'
 import { useCallback, useMemo, useRef } from 'react'
+import { Loading, useRedirect } from 'react-admin'
 import { Bar } from 'react-chartjs-2'
 
 // @ts-expect-error Importing a JS module with no typing. I do not want to fix these types
 import subsonic from '../subsonic'
 import { makeOptions } from './options'
-import { useRedirect } from 'react-admin'
+import { useStat } from './useStat'
 
 interface Stat {
   [k: string]: string | number
@@ -14,16 +15,29 @@ interface Stat {
 }
 
 interface BarChartProps {
-  data: Stat[]
+  count: number
   labelKey: string
+  from: number
   title: string
+  to: number
+  type: string
   route?: (element: Stat) => string
 }
 
-const BarChartWithImage = ({ data, labelKey, title, route }: BarChartProps) => {
+const BarChartWithImage = ({
+  count,
+  from,
+  labelKey,
+  title,
+  to,
+  type,
+  route,
+}: BarChartProps) => {
   const heightRef = useRef(0)
   const barRef = useRef<Chart<'bar', number[], string>>()
   const redirect = useRedirect()
+
+  const [data, loading] = useStat(type, from, to, count)
 
   const plugin = useCallback(() => {
     const data: Plugin = {
@@ -86,6 +100,10 @@ const BarChartWithImage = ({ data, labelKey, title, route }: BarChartProps) => {
 
     return ops
   }, [annotations, data, plugin, redirect, route, title])
+
+  if (loading) {
+    return <Loading />
+  }
 
   return (
     <Bar
