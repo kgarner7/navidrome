@@ -140,3 +140,7 @@ func (db *MockDataStore) Stat(context.Context) model.StatRepository {
 	}
 	return db.MockedStat
 }
+
+func (db *MockDataStore) Listen(context.Context) model.ListenRepository {
+	return struct{ model.PlayerRepository }{}
+}

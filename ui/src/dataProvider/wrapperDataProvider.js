@@ -12,7 +12,7 @@ const mapResource = (resource, params) => {
       if (params.filter) {
         plsId = params.filter.playlist_id
       }
-      return [`playlist/${plsId}/tracks`]
+      return [`playlist/${plsId}/tracks`, params]
     }
     case 'stats': {
       return [

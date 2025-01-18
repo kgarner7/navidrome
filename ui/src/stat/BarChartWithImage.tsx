@@ -80,7 +80,7 @@ const BarChartWithImage = ({
               .height as number,
           )
           const img = new Image(size, size)
-          img.src = subsonic.getCoverArtUrl(augmentStat(type, stat))
+          img.src = subsonic.getCoverArtUrl(augmentStat(type, stat), 300)
           return img
         },
         position: { x: 'start' },

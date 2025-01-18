@@ -83,6 +83,10 @@ func (s *SQLStore) Stat(ctx context.Context) model.StatRepository {
 	return NewStatRepository(ctx, s.getDBXBuilder())
 }
 
+func (s *SQLStore) Listen(ctx context.Context) model.ListenRepository {
+	return NewListenRepository(ctx, s.getDBXBuilder())
+}
+
 func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRepository {
 	switch m.(type) {
 	case model.User:
@@ -105,6 +109,8 @@ func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRe
 		return s.Radio(ctx).(model.ResourceRepository)
 	case model.Share:
 		return s.Share(ctx).(model.ResourceRepository)
+	case model.Listen:
+		return s.Listen(ctx).(model.ResourceRepository)
 	}
 	log.Error("Resource not implemented", "model", reflect.TypeOf(m).Name())
 	return nil
