@@ -35,9 +35,22 @@ const callDeleteMany = (resource, params) => {
 
 const wrapperDataProvider = {
   ...dataProvider,
-  getList: (resource, params) => {
+  getList: async (resource, params) => {
     const [r, p] = mapResource(resource, params)
-    return dataProvider.getList(r, p)
+    if (r === 'listen') {
+      const data = await dataProvider.getList(r, p).then((data) => ({
+        data: data.data.map((record) => ({
+          ...record,
+          id: record.rowId,
+          fileId: record.id,
+        })),
+        total: data.total,
+        validUntil: data.validUntil,
+      }))
+      return data
+    } else {
+      return dataProvider.getList(r, p)
+    }
   },
   getOne: (resource, params) => {
     const [r, p] = mapResource(resource, params)

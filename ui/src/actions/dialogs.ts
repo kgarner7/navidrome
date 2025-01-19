@@ -15,7 +15,12 @@ export const DOWNLOAD_MENU_SONG = 'song'
 export const SHARE_MENU_OPEN = 'SHARE_MENU_OPEN'
 export const SHARE_MENU_CLOSE = 'SHARE_MENU_CLOSE'
 
-export const openShareMenu = (ids, resource, name, label) => ({
+export const openShareMenu = (
+  ids: string[],
+  resource: string,
+  name: string,
+  label?: string,
+) => ({
   type: SHARE_MENU_OPEN,
   ids,
   resource,
@@ -27,7 +32,13 @@ export const closeShareMenu = () => ({
   type: SHARE_MENU_CLOSE,
 })
 
-export const openAddToPlaylist = ({ selectedIds, onSuccess }) => ({
+export const openAddToPlaylist = ({
+  selectedIds,
+  onSuccess,
+}: {
+  selectedIds: string[]
+  onSuccess?: () => void
+}) => ({
   type: ADD_TO_PLAYLIST_OPEN,
   selectedIds,
   onSuccess,
@@ -37,7 +48,7 @@ export const closeAddToPlaylist = () => ({
   type: ADD_TO_PLAYLIST_CLOSE,
 })
 
-export const openDownloadMenu = (record, recordType) => {
+export const openDownloadMenu = (record: object, recordType: string) => {
   return {
     type: DOWNLOAD_MENU_OPEN,
     recordType,
@@ -49,7 +60,7 @@ export const closeDownloadMenu = () => ({
   type: DOWNLOAD_MENU_CLOSE,
 })
 
-export const openDuplicateSongWarning = (duplicateIds) => ({
+export const openDuplicateSongWarning = (duplicateIds: string[]) => ({
   type: DUPLICATE_SONG_WARNING_OPEN,
   duplicateIds,
 })
@@ -58,7 +69,7 @@ export const closeDuplicateSongDialog = () => ({
   type: DUPLICATE_SONG_WARNING_CLOSE,
 })
 
-export const openExtendedInfoDialog = (record) => {
+export const openExtendedInfoDialog = (record: object) => {
   return {
     type: EXTENDED_INFO_OPEN,
     record,

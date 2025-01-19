@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
 
-const getPerPage = (width) => {
+const getPerPage = (width: string) => {
   if (width === 'xs') return 12
   if (width === 'sm') return 12
   if (width === 'md') return 12
@@ -8,7 +8,7 @@ const getPerPage = (width) => {
   return 36
 }
 
-const getPerPageOptions = (width) => {
+const getPerPageOptions = (width: string) => {
   const options = [3, 6, 12]
   if (width === 'xs') return [12]
   if (width === 'sm') return [12]
@@ -16,9 +16,10 @@ const getPerPageOptions = (width) => {
   return options.map((v) => v * 6)
 }
 
-export const useAlbumsPerPage = (width) => {
+export const useAlbumsPerPage = (width: string) => {
   const perPage =
     useSelector(
+      // @ts-expect-error state does have resources
       (state) => state?.admin.resources?.album?.list?.params?.perPage,
     ) || getPerPage(width)
 

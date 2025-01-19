@@ -16,7 +16,7 @@ import playlist from './playlist'
 import radio from './radio'
 import share from './share'
 import externalPlaylist from './externalPlaylist'
-import stat from './stat'
+import listen from './listen'
 import { Player } from './audioplayer'
 import customRoutes from './routes'
 import {
@@ -101,6 +101,7 @@ const Admin = (props) => {
           {...(permissions === 'admin' ? radio.admin : radio.all)}
         />,
         config.enableSharing && <Resource name="share" {...share} />,
+        <Resource name="listen" {...listen} />,
         <Resource
           name="playlist"
           {...playlist}

@@ -229,6 +229,17 @@
           "created": "Recommended playlist"
         }
       }
+    },
+    "listen": {
+      "name": "Listen |||| Listens",
+      "fields": {
+        "albumArtist": "Album Artist",
+        "duration": "Time",
+        "title": "Title",
+        "artist": "Artist",
+        "album": "Album",
+        "submission_time": "Listened at"
+      }
     }
   },
   "ra": {

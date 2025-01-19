@@ -22,7 +22,12 @@ func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository 
 	r.tableName = "scrobbles"
 	r.registerModel(&model.Listen{}, map[string]filterFunc{})
 	r.setSortMappings(map[string]string{
-		"listened_at": "scrobbles.submission_time",
+		"listened_at":  "scrobbles.submission_time",
+		"title":        "order_title, scrobbles.submission_time",
+		"artist":       "order_artist_name, order_album_name, release_date, disc_number, track_number, scrobbles.submission_time",
+		"album":        "order_album_name, release_date, disc_number, track_number, order_artist_name, title, scrobbles.submission_time",
+		"album_artist": "compilation, order_album_artist_name, order_album_name, scrobbles.submission_time",
+		"duration":     "duration, scrobbles.submission_time",
 	})
 	return r
 }
@@ -49,7 +54,7 @@ func (r *listenRepository) ReadAll(options ...rest.QueryOptions) (interface{}, e
 	user := loggedUser(r.ctx)
 
 	sel := r.newSelect(r.parseRestOptions(r.ctx, options...)).
-		Columns("submission_time", "f.*").
+		Columns("scrobbles.ROWID row_id", "submission_time", "f.*").
 		Join("media_file f on f.id = file_id").
 		LeftJoin("annotation on ("+
 			"annotation.item_id = f.id"+

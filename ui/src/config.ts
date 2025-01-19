@@ -35,10 +35,17 @@ const defaultConfig = {
   publicBaseUrl: '/share',
 }
 
-let config
+let config: typeof defaultConfig
+
+declare global {
+  interface Window {
+    __APP_CONFIG__?: string
+    __SHARE_INFO__?: string
+  }
+}
 
 try {
-  const appConfig = JSON.parse(window.__APP_CONFIG__)
+  const appConfig = JSON.parse(window.__APP_CONFIG__ ?? '{}')
   config = {
     ...defaultConfig,
     ...appConfig,
@@ -47,10 +54,10 @@ try {
   config = defaultConfig
 }
 
-export let shareInfo
+export let shareInfo: unknown
 
 try {
-  shareInfo = JSON.parse(window.__SHARE_INFO__)
+  shareInfo = JSON.parse(window.__SHARE_INFO__ ?? 'null')
 } catch (e) {
   shareInfo = null
 }

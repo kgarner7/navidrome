@@ -1,4 +1,3 @@
-import React from 'react'
 import PropTypes from 'prop-types'
 import { useDispatch, useSelector } from 'react-redux'
 import { RecordContextProvider, useTranslate } from 'react-admin'
@@ -9,14 +8,22 @@ import {
   DialogContent,
   DialogTitle,
 } from '@material-ui/core'
-import { closeExtendedInfoDialog } from '../actions'
+import { closeExtendedInfoDialog } from '../actions/dialogs'
+import { MouseEvent } from 'react'
 
-const ExpandInfoDialog = ({ title, content }) => {
+const ExpandInfoDialog = ({
+  title,
+  content,
+}: {
+  title?: string
+  content: JSX.Element
+}) => {
+  // @ts-expect-error I'm not dealing with typing of state
   const { open, record } = useSelector((state) => state.expandInfoDialog)
   const dispatch = useDispatch()
   const translate = useTranslate()
 
-  const handleClose = (e) => {
+  const handleClose = (e: MouseEvent<HTMLButtonElement>) => {
     dispatch(closeExtendedInfoDialog())
     e.stopPropagation()
   }
