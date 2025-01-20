@@ -1,4 +1,4 @@
-export const formatBytes = (bytes, decimals = 2) => {
+export const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes'
 
   const k = 1024
@@ -10,7 +10,7 @@ export const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
-export const formatDuration = (d) => {
+export const formatDuration = (d: number) => {
   d = Math.round(d)
   const days = Math.floor(d / 86400)
   const hours = Math.floor(d / 3600) % 24
@@ -25,9 +25,9 @@ export const formatDuration = (d) => {
   return `${days > 0 ? days + ':' : ''}${f}`
 }
 
-export const formatFullDate = (date, locale) => {
+export const formatFullDate = (date: string, locale: string) => {
   const dashes = date.split('-').length - 1
-  let options = {
+  const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     timeZone: 'UTC',
     ...(dashes > 0 && { month: 'short' }),

@@ -10,6 +10,7 @@ export const ArtistLinkField = withWidth()(({
   source,
 }) => {
   const artistLink = useGetHandleArtistClick(width)
+  if (!record) return null
 
   const id = record[source + 'Id']
   return (

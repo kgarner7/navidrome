@@ -1,4 +1,5 @@
-import { makeStyles, useMediaQuery } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core'
+import { fromUnixTime } from 'date-fns'
 import { useMemo } from 'react'
 import {
   Datagrid,
@@ -17,18 +18,16 @@ import { useDispatch } from 'react-redux'
 import { setTrack } from '../actions'
 import {
   ArtistLinkField,
-  DurationField,
   SongInfo,
   useSelectedFields,
   // @ts-expect-error importing untyped js file in ts
 } from '../common'
+import { DurationField } from '../common/DurationField'
 import ExpandInfoDialog from '../dialogs/ExpandInfoDialog'
-// @ts-expect-error JS. Not porting to ts
 import { AlbumLinkField } from '../song/AlbumLinkField'
-import { ListenListActions } from './ListenListActions'
-import { fromUnixTime } from 'date-fns'
-import { listenToTrack } from './listenToTrack'
 import { ListenContextMenu } from './ListenContextMenu'
+import { ListenListActions } from './ListenListActions'
+import { listenToTrack } from './listenToTrack'
 
 const useStyles = makeStyles({
   contextHeader: {
@@ -39,9 +38,6 @@ const useStyles = makeStyles({
   row: {
     '&:hover': {
       '& $contextMenu': {
-        visibility: 'visible',
-      },
-      '& $ratingField': {
         visibility: 'visible',
       },
     },
@@ -62,8 +58,6 @@ const ListenFilter = (props: Omit<FilterProps, 'children'>) => {
 const ListenList = (props: ListProps) => {
   const classes = useStyles()
   const dispatch = useDispatch()
-  // @ts-expect-error i'm not typing theme
-  const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('md'))
 
   const handleRowClick = (
     _id: Identifier,
@@ -76,11 +70,11 @@ const ListenList = (props: ListProps) => {
 
   const toggleableFields = useMemo(() => {
     return {
-      album: isDesktop && <AlbumLinkField source="album" sortByOrder={'ASC'} />,
+      album: <AlbumLinkField source="album" sortByOrder={'ASC'} />,
       albumArtist: <ArtistLinkField source="albumArtist" />,
       duration: <DurationField source="duration" />,
     }
-  }, [isDesktop])
+  }, [])
 
   const columns = useSelectedFields({
     resource: 'listen',
@@ -103,7 +97,7 @@ const ListenList = (props: ListProps) => {
         <Datagrid rowClick={handleRowClick} classes={{ row: classes.row }}>
           <FunctionField
             source="submission_time"
-            render={(r) => fromUnixTime(r!.submissionTime).toLocaleString()}
+            render={(r) => r && fromUnixTime(r.submissionTime).toLocaleString()}
           />
           <TextField source="title" />
 
