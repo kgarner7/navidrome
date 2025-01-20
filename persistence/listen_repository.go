@@ -20,7 +20,9 @@ func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository 
 	r.ctx = ctx
 	r.db = db
 	r.tableName = "scrobbles"
-	r.registerModel(&model.Listen{}, map[string]filterFunc{})
+	r.registerModel(&model.Listen{}, map[string]filterFunc{
+		"title": fullTextFilter,
+	})
 	r.setSortMappings(map[string]string{
 		"listened_at":  "scrobbles.submission_time",
 		"title":        "order_title, scrobbles.submission_time",

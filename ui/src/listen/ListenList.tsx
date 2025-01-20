@@ -2,10 +2,14 @@ import { makeStyles, useMediaQuery } from '@material-ui/core'
 import { useMemo } from 'react'
 import {
   Datagrid,
+  Filter,
+  FilterProps,
   FunctionField,
   Identifier,
   List,
   ListProps,
+  Pagination,
+  SearchInput,
   TextField,
 } from 'react-admin'
 import { useDispatch } from 'react-redux'
@@ -47,6 +51,14 @@ const useStyles = makeStyles({
   },
 })
 
+const ListenFilter = (props: Omit<FilterProps, 'children'>) => {
+  return (
+    <Filter {...props} variant={'outlined'}>
+      <SearchInput source="title" alwaysOn />
+    </Filter>
+  )
+}
+
 const ListenList = (props: ListProps) => {
   const classes = useStyles()
   const dispatch = useDispatch()
@@ -80,10 +92,13 @@ const ListenList = (props: ListProps) => {
     <>
       <List
         {...props}
-        sort={{ field: 'listened_at', order: 'DESC' }}
+        sort={{ field: 'submission_time', order: 'DESC' }}
         exporter={false}
         actions={<ListenListActions />}
+        filters={<ListenFilter />}
         bulkActionButtons={false}
+        pagination={<Pagination rowsPerPageOptions={[25, 50, 100]} />}
+        perPage={25}
       >
         <Datagrid rowClick={handleRowClick} classes={{ row: classes.row }}>
           <FunctionField
