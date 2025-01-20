@@ -79,7 +79,7 @@ const Stat = () => {
       : now
     const count = params.has('count') ? Number(params.get('count')) : 5
 
-    return [start, end, count]
+    return [start, end, Math.max(Math.min(count, 15), 5)]
   }, [search])
 
   const [startTs, startFormat, endTs, endFormat] = useMemo(() => {
