@@ -55,6 +55,7 @@ func (n *Router) routes() http.Handler {
 		n.R(r, "/transcoding", model.Transcoding{}, conf.Server.EnableTranscodingConfig)
 		n.R(r, "/radio", model.Radio{}, true)
 		n.R(r, "/listen", model.Listen{}, false)
+		n.R(r, "/tag", model.Tag{}, true)
 		if conf.Server.EnableSharing {
 			n.RX(r, "/share", n.share.NewRepository, true)
 		}
@@ -63,6 +64,7 @@ func (n *Router) routes() http.Handler {
 
 		n.addPlaylistRoute(r)
 		n.addPlaylistTrackRoute(r)
+		n.addMissingFilesRoute(r)
 
 		n.externalPlaylistRoutes(r)
 		n.stats(r)
@@ -183,6 +185,35 @@ func (n *Router) getPlayQueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (n *Router) addMissingFilesRoute(r chi.Router) {
+	r.Route("/missing", func(r chi.Router) {
+		n.RX(r, "/", newMissingRepository(n.ds), false)
+		r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+			deleteMissingFiles(n.ds, w, r)
+		})
+	})
+}
+
+func writeDeleteManyResponse(w http.ResponseWriter, r *http.Request, ids []string) {
+	var resp []byte
+	var err error
+	if len(ids) == 1 {
+		resp = []byte(`{"id":"` + ids[0] + `"}`)
+	} else {
+		resp, err = json.Marshal(&struct {
+			Ids []string `json:"ids"`
+		}{Ids: ids})
+		if err != nil {
+			log.Error(r.Context(), "Error marshaling response", "ids", ids, err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
 	_, err = w.Write(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

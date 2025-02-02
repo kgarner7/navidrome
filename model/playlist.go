@@ -115,7 +115,7 @@ type PlaylistRepository interface {
 	Put(pls *Playlist) error
 	Get(id string) (*Playlist, error)
 	GetSyncedPlaylists() (Playlists, error)
-	GetWithTracks(id string, refreshSmartPlaylist bool) (*Playlist, error)
+	GetWithTracks(id string, refreshSmartPlaylist, includeMissing bool) (*Playlist, error)
 	GetAll(options ...QueryOptions) (Playlists, error)
 	CheckExternalIds(agent string, ids []string) ([]string, error)
 	GetByExternalInfo(agent, id string) (*Playlist, error)

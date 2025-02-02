@@ -7,12 +7,33 @@ import (
 	"github.com/deluan/rest"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
+	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
+	"github.com/navidrome/navidrome/utils/slice"
 	"github.com/pocketbase/dbx"
 )
 
 type listenRepository struct {
 	sqlRepository
+}
+
+type dbListen struct {
+	dbMediaFile
+	RowId          int64 `structs:"row_id" json:"rowId"`
+	SubmissionTime int64 `structs:"submission_time" json:"submissionTime"`
+}
+
+type dbListens []dbListen
+
+func (m dbListens) toModels() model.Listens {
+	return slice.Map(m, func(db dbListen) model.Listen {
+		log.Info("listen", "data", db)
+		return model.Listen{
+			MediaFile:      *db.MediaFile,
+			RowId:          db.RowId,
+			SubmissionTime: db.SubmissionTime,
+		}
+	})
 }
 
 func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository {
@@ -21,7 +42,7 @@ func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository 
 	r.db = db
 	r.tableName = "scrobbles"
 	r.registerModel(&model.Listen{}, map[string]filterFunc{
-		"title": fullTextFilter,
+		"title": fullTextFilter(r.tableName),
 	})
 	r.setSortMappings(map[string]string{
 		"listened_at":  "scrobbles.submission_time",
@@ -76,12 +97,12 @@ func (r *listenRepository) ReadAll(options ...rest.QueryOptions) (interface{}, e
 		sel = sel.Columns("coalesce(play_count, 0) as play_count")
 	}
 
-	var listens model.Listens
+	var listens dbListens
 	err := r.queryAll(sel, &listens)
 	if err != nil {
 		return nil, err
 	}
-	return listens, err
+	return listens.toModels(), err
 }
 
 func (r *listenRepository) EntityName() string {

@@ -40,6 +40,7 @@ import useChangeThemeColor from './useChangeThemeColor'
 import SharePlayer from './share/SharePlayer'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
+import missing from './missing/index.js'
 
 const history = createHashHistory()
 
@@ -122,9 +123,19 @@ const Admin = (props) => {
         ) : (
           <Resource name="transcoding" />
         ),
+
+        permissions === 'admin' ? (
+          <Resource
+            name="missing"
+            {...missing}
+            options={{ subMenu: 'settings' }}
+          />
+        ) : null,
+
         <Resource name="translation" />,
         <Resource name="externalPlaylist" {...externalPlaylist} />,
         <Resource name="genre" />,
+        <Resource name="tag" />,
         <Resource name="playlistTrack" />,
         <Resource name="keepalive" />,
         <Resource name="insights" />,

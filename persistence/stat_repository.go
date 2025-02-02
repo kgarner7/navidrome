@@ -64,10 +64,9 @@ func (r *statRepository) ArtistStats(from time.Time, to time.Time, ops ...model.
 // GenreStats implements model.StatRepository.
 func (r *statRepository) GenreStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
 	sel := r.baseSelect(from, to, ops...).
-		Columns("g.id", "g.name").
-		Join("media_file_genres mg ON mg.media_file_id = f.id").
-		Join("genre g ON g.id = mg.genre_id").
-		GroupBy("g.id")
+		From("scrobbles, json_each(f.tags, '$.genre')").
+		Columns("json_extract(value, '$.id') id", "json_extract(value, '$.value') name").
+		GroupBy("name")
 
 	var res model.Stats
 	err := r.queryAll(sel, &res)

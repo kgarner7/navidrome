@@ -9,9 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/kr/pretty"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/log"
+	"github.com/navidrome/navidrome/utils/chain"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 )
@@ -92,6 +94,7 @@ type configOptions struct {
 	PlaylistSyncSchedule            string
 	Jukebox                         jukeboxOptions
 	Backup                          backupOptions
+	PID                             pidOptions
 
 	Agents       string
 	LastFM       lastfmOptions
@@ -115,14 +118,20 @@ type configOptions struct {
 	DevArtworkThrottleBacklogTimeout time.Duration
 	DevArtistInfoTimeToLive          time.Duration
 	DevAlbumInfoTimeToLive           time.Duration
+	DevExternalScanner               bool
+	DevScannerThreads                uint
 	DevInsightsInitialDelay          time.Duration
 	DevEnablePlayerInsights          bool
+	DevOpenSubsonicDisabledClients   string
 }
 
 type scannerOptions struct {
+	Enabled            bool
 	Extractor          string
-	GenreSeparators    string
+	GenreSeparators    string // Deprecated: BFR Update docs
 	GroupAlbumReleases bool
+	WatcherWait        time.Duration
+	ScanOnStartup      bool
 }
 
 type lastfmOptions struct {
@@ -167,6 +176,11 @@ type backupOptions struct {
 	Schedule string
 }
 
+type pidOptions struct {
+	Track string
+	Album string
+}
+
 var (
 	Server = &configOptions{}
 	hooks  []func()
@@ -179,10 +193,10 @@ func LoadFromFile(confFile string) {
 		_, _ = fmt.Fprintln(os.Stderr, "FATAL: Error reading config file:", err)
 		os.Exit(1)
 	}
-	Load()
+	Load(true)
 }
 
-func Load() {
+func Load(noConfigDump bool) {
 	parseIniFileConfiguration()
 
 	err := viper.Unmarshal(&Server)
@@ -234,15 +248,13 @@ func Load() {
 	log.SetLogSourceLine(Server.DevLogSourceLine)
 	log.SetRedacting(Server.EnableLogRedacting)
 
-	if err := validateScanSchedule(); err != nil {
-		os.Exit(1)
-	}
-
-	if err := validatePlaylistSchedule(); err != nil {
-		os.Exit(1)
-	}
-
-	if err := validateBackupSchedule(); err != nil {
+	err = chain.RunSequentially(
+		validateScanSchedule,
+		validateBackupSchedule,
+		validatePlaylistSchedule,
+		validatePlaylistsPath,
+	)
+	if err != nil {
 		os.Exit(1)
 	}
 
@@ -260,7 +272,7 @@ func Load() {
 	}
 
 	// Print current configuration if log level is Debug
-	if log.IsGreaterOrEqualTo(log.LevelDebug) {
+	if log.IsGreaterOrEqualTo(log.LevelDebug) && !noConfigDump {
 		prettyConf := pretty.Sprintf("Loaded configuration from '%s': %# v", Server.ConfigFile, Server)
 		if Server.EnableLogRedacting {
 			prettyConf = log.Redact(prettyConf)
@@ -313,6 +325,17 @@ func disableExternalServices() {
 	if Server.UILoginBackgroundURL == consts.DefaultUILoginBackgroundURL {
 		Server.UILoginBackgroundURL = consts.DefaultUILoginBackgroundURLOffline
 	}
+}
+
+func validatePlaylistsPath() error {
+	for _, path := range strings.Split(Server.PlaylistsPath, string(filepath.ListSeparator)) {
+		_, err := doublestar.Match(path, "")
+		if err != nil {
+			log.Error("Invalid PlaylistsPath", "path", path, err)
+			return err
+		}
+	}
+	return nil
 }
 
 func validateScanSchedule() error {
@@ -391,7 +414,7 @@ func init() {
 	viper.SetDefault("unixsocketperm", "0660")
 	viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
 	viper.SetDefault("scaninterval", -1)
-	viper.SetDefault("scanschedule", "@every 1m")
+	viper.SetDefault("scanschedule", "0")
 	viper.SetDefault("baseurl", "")
 	viper.SetDefault("tlscert", "")
 	viper.SetDefault("tlskey", "")
@@ -405,7 +428,7 @@ func init() {
 	viper.SetDefault("enableartworkprecache", true)
 	viper.SetDefault("autoimportplaylists", true)
 	viper.SetDefault("defaultplaylistpublicvisibility", false)
-	viper.SetDefault("playlistspath", consts.DefaultPlaylistsPath)
+	viper.SetDefault("playlistspath", "")
 	viper.SetDefault("smartPlaylistRefreshDelay", 5*time.Second)
 	viper.SetDefault("enabledownloads", true)
 	viper.SetDefault("enableexternalservices", true)
@@ -436,6 +459,9 @@ func init() {
 	viper.SetDefault("defaultuivolume", consts.DefaultUIVolume)
 	viper.SetDefault("enablereplaygain", true)
 	viper.SetDefault("enablecoveranimation", true)
+	viper.SetDefault("enablesharing", false)
+	viper.SetDefault("shareurl", "")
+	viper.SetDefault("defaultdownloadableshare", false)
 	viper.SetDefault("gatrackingid", "")
 	viper.SetDefault("enableinsightscollector", true)
 	viper.SetDefault("enablelogredacting", true)
@@ -455,9 +481,12 @@ func init() {
 	viper.SetDefault("jukebox.default", "")
 	viper.SetDefault("jukebox.adminonly", true)
 
+	viper.SetDefault("scanner.enabled", true)
 	viper.SetDefault("scanner.extractor", consts.DefaultScannerExtractor)
 	viper.SetDefault("scanner.genreseparators", ";/,")
 	viper.SetDefault("scanner.groupalbumreleases", false)
+	viper.SetDefault("scanner.watcherwait", consts.DefaultWatcherWait)
+	viper.SetDefault("scanner.scanonstartup", true)
 
 	viper.SetDefault("agents", "lastfm,spotify,listenbrainz")
 	viper.SetDefault("lastfm.enabled", true)
@@ -476,6 +505,9 @@ func init() {
 	viper.SetDefault("backup.schedule", "")
 	viper.SetDefault("backup.count", 0)
 
+	viper.SetDefault("pid.track", consts.DefaultTrackPID)
+	viper.SetDefault("pid.album", consts.DefaultAlbumPID)
+
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
 	viper.SetDefault("devenableprofiler", false)
@@ -483,9 +515,6 @@ func init() {
 	viper.SetDefault("devautologinusername", "")
 	viper.SetDefault("devactivitypanel", true)
 	viper.SetDefault("devactivitypanelupdaterate", 300*time.Millisecond)
-	viper.SetDefault("enablesharing", false)
-	viper.SetDefault("shareurl", "")
-	viper.SetDefault("defaultdownloadableshare", false)
 	viper.SetDefault("devenablebufferedscrobble", true)
 	viper.SetDefault("devsidebarplaylists", true)
 	viper.SetDefault("devshowartistpage", true)
@@ -495,8 +524,11 @@ func init() {
 	viper.SetDefault("devartworkthrottlebacklogtimeout", consts.RequestThrottleBacklogTimeout)
 	viper.SetDefault("devartistinfotimetolive", consts.ArtistInfoTimeToLive)
 	viper.SetDefault("devalbuminfotimetolive", consts.AlbumInfoTimeToLive)
+	viper.SetDefault("devexternalscanner", true)
+	viper.SetDefault("devscannerthreads", 5)
 	viper.SetDefault("devinsightsinitialdelay", consts.InsightsInitialDelay)
 	viper.SetDefault("devenableplayerinsights", true)
+	viper.SetDefault("devopensubsonicdisabledclients", "DSub")
 }
 
 func InitConfig(cfgFile string) {
