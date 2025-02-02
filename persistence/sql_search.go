@@ -14,24 +14,24 @@ func formatFullText(text ...string) string {
 	return " " + fullText
 }
 
-func (r sqlRepository) doSearch(q string, offset, size int, includeMissing bool, results any, orderBys ...string) error {
+func (r sqlRepository) doSearch(sq SelectBuilder, q string, offset, size int, includeMissing bool, results any, orderBys ...string) error {
 	q = strings.TrimSpace(q)
 	q = strings.TrimSuffix(q, "*")
 	if len(q) < 2 {
 		return nil
 	}
 
-	sq := r.newSelect().Columns(r.tableName + ".*")
-	sq = r.withAnnotation(sq, r.tableName+".id")
-	sq = r.withBookmark(sq, r.tableName+".id")
+	//sq := r.newSelect().Columns(r.tableName + ".*")
+	//sq = r.withAnnotation(sq, r.tableName+".id")
+	//sq = r.withBookmark(sq, r.tableName+".id")
 	filter := fullTextExpr(r.tableName, q)
 	if filter != nil {
 		sq = sq.Where(filter)
 		sq = sq.OrderBy(orderBys...)
 	} else {
-		// If the filter is empty, we sort by id.
+		// If the filter is empty, we sort by rowid.
 		// This is to speed up the results of `search3?query=""`, for OpenSubsonic
-		sq = sq.OrderBy("id")
+		sq = sq.OrderBy(r.tableName + ".rowid")
 	}
 	if !includeMissing {
 		sq = sq.Where(Eq{r.tableName + ".missing": false})
