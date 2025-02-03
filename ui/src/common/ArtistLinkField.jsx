@@ -3,15 +3,22 @@ import { Link } from 'react-admin'
 import { withWidth } from '@material-ui/core'
 import { useGetHandleArtistClick } from './useGetHandleArtistClick'
 import { intersperse } from '../utils/index.js'
+import { useDispatch } from 'react-redux'
+import { closeExtendedInfoDialog } from '../actions/dialogs'
 
 const ALink = withWidth()((props) => {
   const { artist, width, ...rest } = props
   const artistLink = useGetHandleArtistClick(width)
+  const dispatch = useDispatch()
+
   return (
     <Link
       key={artist.id}
       to={artistLink(artist.id)}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation()
+        dispatch(closeExtendedInfoDialog())
+      }}
       {...rest}
     >
       {artist.name}
@@ -52,7 +59,7 @@ const parseAndReplaceArtists = (
   return result
 }
 
-export const ArtistLinkField = ({ record, className, source }) => {
+export const ArtistLinkField = ({ record, className, limit, source }) => {
   const role = source.toLowerCase()
   const artists = record['participants']
     ? record['participants'][role]
@@ -83,21 +90,34 @@ export const ArtistLinkField = ({ record, className, source }) => {
   // Dedupe artists, only shows the first 3
   const seen = new Set()
   const dedupedArtists = []
-  artists?.forEach((artist) => {
-    if (!seen.has(artist.id) && dedupedArtists.length < 3) {
+  let limitedShow = false
+
+  for (const artist of artists ?? []) {
+    if (!seen.has(artist.id)) {
       seen.add(artist.id)
-      dedupedArtists.push(artist)
+
+      if (dedupedArtists.length < limit) {
+        dedupedArtists.push(artist)
+      } else {
+        limitedShow = true
+        break
+      }
     }
-  })
+  }
 
   const artistsList = dedupedArtists.map((artist) => (
     <ALink artist={artist} className={className} key={artist?.id} />
   ))
 
+  if (limitedShow) {
+    artistsList.push(<span>...</span>)
+  }
+
   return <>{intersperse(artistsList, ' • ')}</>
 }
 
 ArtistLinkField.propTypes = {
+  limit: PropTypes.number,
   record: PropTypes.object,
   className: PropTypes.string,
   source: PropTypes.string,
@@ -105,5 +125,6 @@ ArtistLinkField.propTypes = {
 
 ArtistLinkField.defaultProps = {
   addLabel: true,
+  limit: 3,
   source: 'albumArtist',
 }

@@ -34,7 +34,7 @@ const ExpandInfoDialog = ({
       onClose={handleClose}
       aria-labelledby="info-dialog-album"
       fullWidth={true}
-      maxWidth={'sm'}
+      maxWidth={'md'}
     >
       <DialogTitle id="info-dialog-album">
         {translate(title || 'resources.song.actions.info')}
