@@ -12,7 +12,6 @@ import (
 
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server/public"
@@ -170,7 +169,6 @@ func childFromMediaFile(ctx context.Context, mf model.MediaFile) responses.Child
 	child.CoverArt = mf.CoverArtID().String()
 	child.ContentType = mf.ContentType()
 	player, ok := request.PlayerFrom(ctx)
-	log.Error(ctx, "childFromMediaFile", "path", mf.LibraryPath)
 
 	if ok && player.ReportRealPath {
 		child.Path = mf.AbsolutePath()
