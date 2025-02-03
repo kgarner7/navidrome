@@ -13,7 +13,7 @@ export const AlbumLinkField = ({
 
   if (!record) return null
 
-  record ? (
+  return record ? (
     <Link
       to={`/album/${record.albumId}/show`}
       onClick={(e) => {
