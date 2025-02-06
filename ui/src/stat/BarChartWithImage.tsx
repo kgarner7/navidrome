@@ -28,7 +28,7 @@ const augmentStat = (type: BarChartProps['type'], stat: object) => {
     case 'song':
       return { album: 1, ...stat }
     case 'album':
-      return { artist: 1, ...stat }
+      return { albumArtist: 1, ...stat }
     case 'artist':
       return stat
   }
