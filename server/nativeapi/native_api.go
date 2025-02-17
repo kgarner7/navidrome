@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"html"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/deluan/rest"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/core"
 	"github.com/navidrome/navidrome/core/external_playlists"
@@ -65,6 +68,7 @@ func (n *Router) routes() http.Handler {
 		n.addPlaylistRoute(r)
 		n.addPlaylistTrackRoute(r)
 		n.addMissingFilesRoute(r)
+		n.addInspectRoute(r)
 
 		n.externalPlaylistRoutes(r)
 		n.stats(r)
@@ -204,7 +208,7 @@ func writeDeleteManyResponse(w http.ResponseWriter, r *http.Request, ids []strin
 	var resp []byte
 	var err error
 	if len(ids) == 1 {
-		resp = []byte(`{"id":"` + ids[0] + `"}`)
+		resp = []byte(`{"id":"` + html.EscapeString(ids[0]) + `"}`)
 	} else {
 		resp, err = json.Marshal(&struct {
 			Ids []string `json:"ids"`
@@ -217,5 +221,19 @@ func writeDeleteManyResponse(w http.ResponseWriter, r *http.Request, ids []strin
 	_, err = w.Write(resp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (n *Router) addInspectRoute(r chi.Router) {
+	if conf.Server.Inspect.Enabled {
+		r.Group(func(r chi.Router) {
+			if conf.Server.Inspect.MaxRequests > 0 {
+				log.Debug("Throttling inspect", "maxRequests", conf.Server.Inspect.MaxRequests,
+					"backlogLimit", conf.Server.Inspect.BacklogLimit, "backlogTimeout",
+					conf.Server.Inspect.BacklogTimeout)
+				r.Use(middleware.ThrottleBacklog(conf.Server.Inspect.MaxRequests, conf.Server.Inspect.BacklogLimit, time.Duration(conf.Server.Inspect.BacklogTimeout)))
+			}
+			r.Get("/inspect", inspect(n.ds))
+		})
 	}
 }

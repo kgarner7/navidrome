@@ -33,7 +33,7 @@ var _ = Describe("Participants", func() {
 		}
 	})
 
-	var toMediaFile = func(tags map[string][]string) model.MediaFile {
+	var toMediaFile = func(tags model.RawTags) model.MediaFile {
 		props.Tags = tags
 		md = metadata.New("filepath", props)
 		return md.ToMediaFile(1, "folderID")
@@ -42,7 +42,7 @@ var _ = Describe("Participants", func() {
 	Describe("ARTIST(S) tags", func() {
 		Context("No ARTIST/ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{})
+				mf = toMediaFile(model.RawTags{})
 			})
 
 			It("should set artist to Unknown Artist", func() {
@@ -64,7 +64,7 @@ var _ = Describe("Participants", func() {
 
 		Context("Single-valued ARTIST tags, no ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":               {"Artist Name"},
 					"ARTISTSORT":           {"Name, Artist"},
 					"MUSICBRAINZ_ARTISTID": {mbid1},
@@ -94,7 +94,7 @@ var _ = Describe("Participants", func() {
 		})
 		Context("Multiple values in a Single-valued ARTIST tags, no ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":               {"Artist Name feat. Someone Else"},
 					"ARTISTSORT":           {"Name, Artist feat. Else, Someone"},
 					"MUSICBRAINZ_ARTISTID": {mbid1},
@@ -131,7 +131,7 @@ var _ = Describe("Participants", func() {
 				Expect(artist1.MbzArtistID).To(BeEmpty())
 			})
 			It("should split the tag using case-insensitive separators", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST": {"A1 FEAT. A2"},
 				})
 				participants := mf.Participants
@@ -146,7 +146,7 @@ var _ = Describe("Participants", func() {
 			})
 
 			It("should not add an empty artist after split", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST": {"John Doe /  / Jane Doe"},
 				})
 
@@ -160,7 +160,7 @@ var _ = Describe("Participants", func() {
 
 		Context("Multi-valued ARTIST tags, no ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":               {"First Artist", "Second Artist"},
 					"ARTISTSORT":           {"Name, First Artist", "Name, Second Artist"},
 					"MUSICBRAINZ_ARTISTID": {mbid1, mbid2},
@@ -196,7 +196,7 @@ var _ = Describe("Participants", func() {
 
 		Context("Single-valued ARTIST tags, multi-valued ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":               {"First Artist & Second Artist"},
 					"ARTISTSORT":           {"Name, First Artist & Name, Second Artist"},
 					"MUSICBRAINZ_ARTISTID": {mbid1, mbid2},
@@ -233,7 +233,7 @@ var _ = Describe("Participants", func() {
 
 		Context("Multi-valued ARTIST tags, multi-valued ARTISTS tags", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":               {"First Artist", "Second Artist"},
 					"ARTISTSORT":           {"Name, First Artist", "Name, Second Artist"},
 					"MUSICBRAINZ_ARTISTID": {mbid1, mbid2},
@@ -278,7 +278,7 @@ var _ = Describe("Participants", func() {
 		Context("No ALBUMARTIST/ALBUMARTISTS tags", func() {
 			When("the COMPILATION tag is not set", func() {
 				BeforeEach(func() {
-					mf = toMediaFile(map[string][]string{
+					mf = toMediaFile(model.RawTags{
 						"ARTIST":               {"Artist Name"},
 						"ARTISTSORT":           {"Name, Artist"},
 						"MUSICBRAINZ_ARTISTID": {mbid1},
@@ -307,7 +307,7 @@ var _ = Describe("Participants", func() {
 
 			When("the COMPILATION tag is true", func() {
 				BeforeEach(func() {
-					mf = toMediaFile(map[string][]string{
+					mf = toMediaFile(model.RawTags{
 						"COMPILATION": {"1"},
 					})
 				})
@@ -335,7 +335,7 @@ var _ = Describe("Participants", func() {
 
 		Context("ALBUMARTIST tag is set", func() {
 			BeforeEach(func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"ARTIST":                    {"Track Artist Name"},
 					"ARTISTSORT":                {"Name, Track Artist"},
 					"MUSICBRAINZ_ARTISTID":      {mbid1},
@@ -369,7 +369,7 @@ var _ = Describe("Participants", func() {
 	Describe("COMPOSER and LYRICIST tags (with sort names)", func() {
 		DescribeTable("should return the correct participation",
 			func(role model.Role, nameTag, sortTag string) {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					nameTag: {"First Name", "Second Name"},
 					sortTag: {"Name, First", "Name, Second"},
 				})
@@ -405,7 +405,7 @@ var _ = Describe("Participants", func() {
 			}
 
 			It("should return the correct participation", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"PERFORMER:GUITAR":        {"Eric Clapton", "B.B. King"},
 					"PERFORMER:BASS":          {"Nathan East"},
 					"PERFORMER:HAMMOND ORGAN": {"Tim Carmon"},
@@ -428,7 +428,7 @@ var _ = Describe("Participants", func() {
 	Describe("Other tags", func() {
 		DescribeTable("should return the correct participation",
 			func(role model.Role, tag string) {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					tag: {"John Doe", "Jane Doe"},
 				})
 
@@ -458,7 +458,7 @@ var _ = Describe("Participants", func() {
 	Describe("Role value splitting", func() {
 		When("the tag is single valued", func() {
 			It("should split the values by the configured separator", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"COMPOSER": {"John Doe/Someone Else/The Album Artist"},
 				})
 
@@ -470,7 +470,7 @@ var _ = Describe("Participants", func() {
 				Expect(composers[2].Name).To(Equal("The Album Artist"))
 			})
 			It("should not add an empty participant after split", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"COMPOSER": {"John Doe/"},
 				})
 
@@ -480,7 +480,7 @@ var _ = Describe("Participants", func() {
 				Expect(composers[0].Name).To(Equal("John Doe"))
 			})
 			It("should trim the values", func() {
-				mf = toMediaFile(map[string][]string{
+				mf = toMediaFile(model.RawTags{
 					"COMPOSER": {"John Doe / Someone Else / The Album Artist"},
 				})
 
@@ -496,7 +496,7 @@ var _ = Describe("Participants", func() {
 
 	Describe("MBID tags", func() {
 		It("should set the MBID for the artist based on the track/album artist", func() {
-			mf = toMediaFile(map[string][]string{
+			mf = toMediaFile(model.RawTags{
 				"ARTIST":                    {"John Doe", "Jane Doe"},
 				"MUSICBRAINZ_ARTISTID":      {mbid1, mbid2},
 				"ALBUMARTIST":               {"The Album Artist"},
@@ -516,6 +516,78 @@ var _ = Describe("Participants", func() {
 			producers := participants[model.RoleProducer]
 			Expect(producers[0].MbzArtistID).To(Equal(mbid2))
 			Expect(producers[1].MbzArtistID).To(Equal(mbid1))
+		})
+	})
+
+	Describe("Non-standard MBID tags", func() {
+		var allMappings = map[model.Role]model.TagName{
+			model.RoleComposer:  model.TagMusicBrainzComposerID,
+			model.RoleLyricist:  model.TagMusicBrainzLyricistID,
+			model.RoleConductor: model.TagMusicBrainzConductorID,
+			model.RoleArranger:  model.TagMusicBrainzArrangerID,
+			model.RoleDirector:  model.TagMusicBrainzDirectorID,
+			model.RoleProducer:  model.TagMusicBrainzProducerID,
+			model.RoleEngineer:  model.TagMusicBrainzEngineerID,
+			model.RoleMixer:     model.TagMusicBrainzMixerID,
+			model.RoleRemixer:   model.TagMusicBrainzRemixerID,
+			model.RoleDJMixer:   model.TagMusicBrainzDJMixerID,
+		}
+
+		It("should handle more artists than mbids", func() {
+			for key := range allMappings {
+				mf = toMediaFile(map[string][]string{
+					key.String():              {"a", "b", "c"},
+					allMappings[key].String(): {"f634bf6d-d66a-425d-888a-28ad39392759", "3dfa3c70-d7d3-4b97-b953-c298dd305e12"},
+				})
+
+				participants := mf.Participants
+				Expect(participants).To(HaveKeyWithValue(key, HaveLen(3)))
+				roles := participants[key]
+
+				Expect(roles[0].Name).To(Equal("a"))
+				Expect(roles[1].Name).To(Equal("b"))
+				Expect(roles[2].Name).To(Equal("c"))
+
+				Expect(roles[0].MbzArtistID).To(Equal("f634bf6d-d66a-425d-888a-28ad39392759"))
+				Expect(roles[1].MbzArtistID).To(Equal("3dfa3c70-d7d3-4b97-b953-c298dd305e12"))
+				Expect(roles[2].MbzArtistID).To(Equal(""))
+			}
+		})
+
+		It("should handle more mbids than artists", func() {
+			for key := range allMappings {
+				mf = toMediaFile(map[string][]string{
+					key.String():              {"a", "b"},
+					allMappings[key].String(): {"f634bf6d-d66a-425d-888a-28ad39392759", "3dfa3c70-d7d3-4b97-b953-c298dd305e12"},
+				})
+
+				participants := mf.Participants
+				Expect(participants).To(HaveKeyWithValue(key, HaveLen(2)))
+				roles := participants[key]
+
+				Expect(roles[0].Name).To(Equal("a"))
+				Expect(roles[1].Name).To(Equal("b"))
+
+				Expect(roles[0].MbzArtistID).To(Equal("f634bf6d-d66a-425d-888a-28ad39392759"))
+				Expect(roles[1].MbzArtistID).To(Equal("3dfa3c70-d7d3-4b97-b953-c298dd305e12"))
+			}
+		})
+
+		It("should refuse duplicate names if no mbid specified", func() {
+			for key := range allMappings {
+				mf = toMediaFile(map[string][]string{
+					key.String(): {"a", "b", "a", "a"},
+				})
+
+				participants := mf.Participants
+				Expect(participants).To(HaveKeyWithValue(key, HaveLen(2)))
+				roles := participants[key]
+
+				Expect(roles[0].Name).To(Equal("a"))
+				Expect(roles[0].MbzArtistID).To(Equal(""))
+				Expect(roles[1].Name).To(Equal("b"))
+				Expect(roles[1].MbzArtistID).To(Equal(""))
+			}
 		})
 	})
 })

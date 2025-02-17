@@ -68,6 +68,8 @@ func tagID(name TagName, value string) string {
 	return id.NewTagID(string(name), value)
 }
 
+type RawTags map[string][]string
+
 type Tags map[TagName][]string
 
 func (t Tags) Values(name TagName) []string {
@@ -239,4 +241,16 @@ const (
 	TagMusicBrainzAlbumArtistID  TagName = "musicbrainz_albumartistid"
 	TagMusicBrainzAlbumID        TagName = "musicbrainz_albumid"
 	TagMusicBrainzReleaseGroupID TagName = "musicbrainz_releasegroupid"
+
+	TagMusicBrainzComposerID  TagName = "musicbrainz_composerid"
+	TagMusicBrainzLyricistID  TagName = "musicbrainz_lyricistid"
+	TagMusicBrainzDirectorID  TagName = "musicbrainz_directorid"
+	TagMusicBrainzProducerID  TagName = "musicbrainz_producerid"
+	TagMusicBrainzEngineerID  TagName = "musicbrainz_engineerid"
+	TagMusicBrainzMixerID     TagName = "musicbrainz_mixerid"
+	TagMusicBrainzRemixerID   TagName = "musicbrainz_remixerid"
+	TagMusicBrainzDJMixerID   TagName = "musicbrainz_djmixerid"
+	TagMusicBrainzConductorID TagName = "musicbrainz_conductorid"
+	TagMusicBrainzArrangerID  TagName = "musicbrainz_arrangerid"
+	TagMusicBrainzPerformerID TagName = "musicbrainz_performerid"
 )
