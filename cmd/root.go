@@ -235,34 +235,6 @@ func startScanWatcher(ctx context.Context) func() error {
 	}
 }
 
-func schedulePlaylistSync(ctx context.Context, scanner scanner.Scanner) func() error {
-	return func() error {
-		schedule := conf.Server.PlaylistSyncSchedule
-		if schedule == "" {
-			log.Warn("Periodic playlist sync is DISABLED")
-			return nil
-		}
-
-		schedulerInstance := scheduler.GetInstance()
-
-		log.Info("Scheduling periodic playlist sync", "schedule", schedule)
-		err := schedulerInstance.Add(schedule, func() {
-			_ = scanner.SyncPlaylists(ctx)
-		})
-		if err != nil {
-			log.Error("Error scheduling periodic playlist sync", err)
-		}
-
-		time.Sleep(2 * time.Second) // Wait 2 seconds before the initial scan
-		log.Debug("Executing initial playlist sync")
-		if err := scanner.SyncPlaylists(ctx); err != nil {
-			log.Error("Error executing initial  playlist sync", err)
-		}
-		log.Debug("Finished initial  playlist sync")
-		return nil
-	}
-}
-
 func schedulePeriodicBackup(ctx context.Context) func() error {
 	return func() error {
 		schedule := conf.Server.Backup.Schedule
@@ -303,6 +275,10 @@ func scheduleDBOptimizer(ctx context.Context) func() error {
 		log.Info(ctx, "Scheduling DB optimizer", "schedule", consts.OptimizeDBSchedule)
 		schedulerInstance := scheduler.GetInstance()
 		err := schedulerInstance.Add(consts.OptimizeDBSchedule, func() {
+			if scanner.IsScanning() {
+				log.Debug(ctx, "Skipping DB optimization because a scan is in progress")
+				return
+			}
 			db.Optimize(ctx)
 		})
 		return err
@@ -349,6 +325,27 @@ func startPlaybackServer(ctx context.Context) func() error {
 		log.Info(ctx, "Starting Jukebox service")
 		playbackInstance := GetPlaybackServer()
 		return playbackInstance.Run(ctx)
+	}
+}
+
+func schedulePlaylistSync(ctx context.Context, scanner scanner.Scanner) func() error {
+	return func() error {
+		schedule := conf.Server.PlaylistSyncSchedule
+		if schedule == "" {
+			log.Warn("Periodic playlist sync is DISABLED")
+			return nil
+		}
+
+		schedulerInstance := scheduler.GetInstance()
+
+		log.Info("Scheduling periodic playlist sync", "schedule", schedule)
+		err := schedulerInstance.Add(schedule, func() {
+			_ = scanner.SyncPlaylists(ctx)
+		})
+		if err != nil {
+			log.Error("Error scheduling periodic playlist sync", err)
+		}
+		return nil
 	}
 }
 

@@ -301,6 +301,9 @@ func Load(noConfigDump bool) {
 		disableExternalServices()
 	}
 
+	// BFR Remove before release
+	Server.Scanner.Extractor = consts.DefaultScannerExtractor
+
 	// Call init hooks
 	for _, hook := range hooks {
 		hook()

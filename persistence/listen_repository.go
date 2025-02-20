@@ -7,7 +7,6 @@ import (
 	"github.com/deluan/rest"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/utils/slice"
 	"github.com/pocketbase/dbx"
@@ -27,7 +26,6 @@ type dbListens []dbListen
 
 func (m dbListens) toModels() model.Listens {
 	return slice.Map(m, func(db dbListen) model.Listen {
-		log.Info("listen", "data", db)
 		return model.Listen{
 			MediaFile:      *db.MediaFile,
 			RowId:          db.RowId,
