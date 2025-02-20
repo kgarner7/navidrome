@@ -230,38 +230,11 @@ additional:
   recordlabel:
     aliases: [ tpub, label, publisher, ----:com.apple.itunes:label, wm/publisher, organization ]
     album: true
-  musicbrainz_arrangerid: 
-    aliases: [ TXXX:musicbrainz_arranger_id, musicbrainz_arranger_id, MUSICBRAINZ_ARRANGER_ID, ----:com.apple.iTunes:MUSICBRAINZ_ARRANGER_ID]
-    type: uuid
-  musicbrainz_composerid: 
-    aliases: [ TXXX:musicbrainz_composer_id, musicbrainz_composer_id, MUSICBRAINZ_COMPOSER_ID, ----:com.apple.iTunes:musicbrainz_composer_id]
-    type: uuid
   musicbrainz_discid:
     aliases: [ txxx:musicbrainz disc id, musicbrainz_discid, musicbrainz disc id, ----:com.apple.itunes:musicbrainz disc id, musicbrainz/disc id ]
     type: uuid
   musicbrainz_labelid: 
     aliases: [ TXXX:musicbrainz_label_id, musicbrainz_label_id, MUSICBRAINZ_LABEL_ID, ----:com.apple.iTunes:musicbrainz_label_id]
-    type: uuid
-  musicbrainz_lyricistid: 
-    aliases: [ TXXX:musicbrainz_lyricist_id, musicbrainz_lyricist_id, MUSICBRAINZ_LYRICIST_ID, ----:com.apple.iTunes:musicbrainz_lyricist_id]
-    type: uuid
-  musicbrainz_miscid: 
-    aliases: [ TXXX:musicbrainz_misc_id, musicbrainz_misc_id, MUSICBRAINZ_MISC_ID, ----:com.apple.iTunes:musicbrainz_misc_id]
-    type: uuid
-  musicbrainz_mixerid: 
-    aliases: [ TXXX:musicbrainz_mixer_id, musicbrainz_mixer_id, MUSICBRAINZ_MIXER_ID, ----:com.apple.iTunes:musicbrainz_mixer_id]
-    type: uuid
-  musicbrainz_performer_stringsid: 
-    aliases: [ TXXX:musicbrainz_performer_strings_id, musicbrainz_performer_strings_id, MUSICBRAINZ_PERFORMER_STRINGS_ID, ----:com.apple.iTunes:musicbrainz_performer_strings_id]
-    type: uuid
-  musicbrainz_performer_vocalsid: 
-    aliases: [ TXXX:musicbrainz_performer_vocals_id, musicbrainz_performer_vocals_id, MUSICBRAINZ_PERFORMER_VOCALS_ID, ----:com.apple.iTunes:musicbrainz_performer_vocals_id]
-    type: uuid
-  musicbrainz_producerid: 
-    aliases: [ TXXX:musicbrainz_producer_id, musicbrainz_producer_id, MUSICBRAINZ_PRODUCER_ID, ----:com.apple.iTunes:musicbrainz_producer_id]
-    type: uuid
-  musicbrainz_recording_engineerid: 
-    aliases: [ TXXX:musicbrainz_recording_engineer_id, musicbrainz_recording_engineer_id, MUSICBRAINZ_RECORDING_ENGINEER_ID, ----:com.apple.iTunes:musicbrainz_recording_engineer_id]
     type: uuid
   musicbrainz_workid:
     aliases: [ txxx:musicbrainz work id, musicbrainz_workid, musicbrainz work id, ----:com.apple.itunes:musicbrainz work id, musicbrainz/work id ]
