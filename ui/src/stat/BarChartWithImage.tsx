@@ -1,18 +1,14 @@
 import type { AnnotationOptions } from 'chartjs-plugin-annotation'
 import type { Chart, Plugin } from 'chart.js'
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Loading, useRedirect } from 'react-admin'
 import { Bar } from 'react-chartjs-2'
 
 // @ts-expect-error Importing a JS module with no typing. I do not want to fix these types
 import subsonic from '../subsonic'
 import { makeOptions } from './options'
-import { useStat } from './useStat'
-
-interface Stat {
-  [k: string]: string | number
-  count: number
-}
+import { Stat, useStat } from './useStat'
+import { Pagination } from './Pagination'
 
 interface BarChartProps {
   count: number
@@ -42,11 +38,12 @@ const BarChartWithImage = ({
   type,
   route,
 }: BarChartProps) => {
+  const [page, setPage] = useState(1)
   const heightRef = useRef(0)
   const barRef = useRef<Chart<'bar', number[], string>>()
   const redirect = useRedirect()
 
-  const [data, loading] = useStat(type, from, to, count)
+  const [data, loading, total] = useStat(type, from, to, page, count)
 
   const plugin = useCallback(() => {
     const data: Plugin = {
@@ -110,20 +107,21 @@ const BarChartWithImage = ({
     return ops
   }, [annotations, data, plugin, redirect, route, title])
 
-  if (loading) {
-    return <Loading />
-  }
-
   return (
-    <Bar
-      ref={barRef}
-      options={options}
-      updateMode="show"
-      data={{
-        datasets: [{ data: values }],
-        labels,
-      }}
-    />
+    <>
+      <Bar
+        ref={barRef}
+        options={options}
+        updateMode="show"
+        data={{
+          datasets: [{ data: values }],
+          labels,
+        }}
+      />
+      {(!loading || total !== -1) && (
+        <Pagination setPage={setPage} count={count} page={page} total={total} />
+      )}
+    </>
   )
 }
 

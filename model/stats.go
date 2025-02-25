@@ -10,10 +10,17 @@ type Stat struct {
 
 type Stats []Stat
 
+type StatType string
+
+const (
+	AlbumStat  StatType = "album"
+	ArtistStat StatType = "artist"
+	GenreStat  StatType = "genre"
+	SongStat   StatType = "song"
+)
+
 type StatRepository interface {
-	AlbumStats(from time.Time, to time.Time, ops ...QueryOptions) (Stats, error)
-	ArtistStats(from time.Time, to time.Time, ops ...QueryOptions) (Stats, error)
-	GenreStats(from time.Time, to time.Time, ops ...QueryOptions) (Stats, error)
-	SongStats(from time.Time, to time.Time, ops ...QueryOptions) (Stats, error)
+	Stats(statType StatType, from time.Time, to time.Time, ops ...QueryOptions) (Stats, error)
+	StatsCount(statType StatType, from time.Time, to time.Time) (int64, error)
 	RecordPlay(id string, ts time.Time) error
 }

@@ -2,6 +2,7 @@ package nativeapi
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -10,44 +11,39 @@ import (
 	"github.com/navidrome/navidrome/utils/req"
 )
 
-type statType uint
-
-const (
-	album = iota
-	artist
-	genre
-	song
-)
-
-func (n *Router) getStats(stat statType) http.HandlerFunc {
+func (n *Router) getStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		p := req.Params(r)
 
+		typeString := p.StringOr("stat", "")
+
+		var stat model.StatType
+
+		switch typeString {
+		case "album":
+			stat = model.AlbumStat
+		case "artist":
+			stat = model.ArtistStat
+		case "genre":
+			stat = model.GenreStat
+		case "song":
+			stat = model.SongStat
+		default:
+			http.Error(w, "Invalid stat type", http.StatusBadRequest)
+		}
+
 		from := p.TimeOr("from", time.Now().Add(-7*24*time.Hour))
 		to := p.TimeOr("to", time.Now())
-		start := p.IntOr("start", 0)
-		end := p.IntOr("end", start+5)
-
-		var data interface{}
-		var err error
+		start := p.IntOr("_start", 0)
+		end := p.IntOr("_end", start+5)
 
 		ops := model.QueryOptions{
 			Max:    end - start,
 			Offset: start,
-			Order:  "count DESC",
 		}
 
-		switch stat {
-		case album:
-			data, err = n.ds.Stat(ctx).AlbumStats(from, to, ops)
-		case artist:
-			data, err = n.ds.Stat(ctx).ArtistStats(from, to, ops)
-		case genre:
-			data, err = n.ds.Stat(ctx).GenreStats(from, to, ops)
-		case song:
-			data, err = n.ds.Stat(ctx).SongStats(from, to, ops)
-		}
+		data, err := n.ds.Stat(ctx).Stats(stat, from, to, ops)
 
 		if err != nil {
 			log.Error(ctx, "Error getting media stats", err)
@@ -55,15 +51,19 @@ func (n *Router) getStats(stat statType) http.HandlerFunc {
 			return
 		}
 
+		count, err := n.ds.Stat(ctx).StatsCount(stat, from, to)
+		if err != nil {
+			log.Error(ctx, "Error getting media count", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
+
 		replyJson(ctx, w, data)
 	}
 }
 
 func (n *Router) stats(r chi.Router) {
-	r.Route("/stats", func(r chi.Router) {
-		r.Get("/album", n.getStats(album))
-		r.Get("/artist", n.getStats(artist))
-		r.Get("/genre", n.getStats(genre))
-		r.Get("/song", n.getStats(song))
-	})
+	r.Get("/stats", n.getStats())
 }

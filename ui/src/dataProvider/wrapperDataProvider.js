@@ -22,12 +22,6 @@ const mapResource = (resource, params) => {
       }
       return [`playlist/${plsId}/tracks`, params]
     }
-    case 'stats': {
-      return [
-        `stats/${params.type}?from=${params.from}&to=${params.to}start=${params.start}&end=${params.end}`,
-        { ids: [] },
-      ]
-    }
     case 'album':
     case 'song': {
       if (params.filter && !isAdmin()) {

@@ -37,11 +37,26 @@ func (r *statRepository) baseSelect(from time.Time, to time.Time, ops ...model.Q
 	return sel
 }
 
-func (r *statRepository) AlbumStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
-	sel := r.baseSelect(from, to, ops...).
-		Columns("a.id", "a.name").
-		Join("album a on a.id = f.album_id").
-		GroupBy("a.id")
+func (r *statRepository) Stats(statType model.StatType, from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
+	sel := r.baseSelect(from, to, ops...)
+
+	switch statType {
+	case model.AlbumStat:
+		sel = sel.Columns("a.id", "a.name").
+			Join("album a on a.id = f.album_id").
+			GroupBy("a.id")
+	case model.ArtistStat:
+		sel = sel.Columns("a.id", "a.name").
+			Join("artist a on a.id = f.artist_id").
+			GroupBy("a.id")
+	case model.GenreStat:
+		sel = sel.From("scrobbles, json_each(f.tags, '$.genre')").
+			Columns("json_extract(value, '$.id') id", "json_extract(value, '$.value') name").
+			GroupBy("name")
+	case model.SongStat:
+		sel = sel.Columns("f.id", "f.title name").
+			GroupBy("f.id")
+	}
 
 	var stat model.Stats
 	err := r.queryAll(sel, &stat)
@@ -49,39 +64,27 @@ func (r *statRepository) AlbumStats(from time.Time, to time.Time, ops ...model.Q
 	return stat, err
 }
 
-func (r *statRepository) ArtistStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
-	sel := r.baseSelect(from, to, ops...).
-		Columns("a.id", "a.name").
-		Join("artist a on a.id = f.artist_id").
-		GroupBy("a.id")
+func (r *statRepository) StatsCount(statType model.StatType, from time.Time, to time.Time) (int64, error) {
+	sel := r.baseSelect(from, to).RemoveColumns()
 
-	var stat model.Stats
-	err := r.queryAll(sel, &stat)
+	switch statType {
+	case model.AlbumStat:
+		sel = sel.Join("album a on a.id = f.album_id").
+			Column("count(distinct a.id) count")
+	case model.ArtistStat:
+		sel = sel.Join("artist a on a.id = f.artist_id").
+			Column("count(distinct a.id) count")
+	case model.GenreStat:
+		sel = sel.From("scrobbles, json_each(f.tags, '$.genre')").
+			Column("count(distinct json_extract(value, '$.id')) count")
+	case model.SongStat:
+		sel = sel.Column("count(distinct f.id) count")
+	}
 
-	return stat, err
-}
+	var res struct{ Count int64 }
+	err := r.queryOne(sel, &res)
 
-// GenreStats implements model.StatRepository.
-func (r *statRepository) GenreStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
-	sel := r.baseSelect(from, to, ops...).
-		From("scrobbles, json_each(f.tags, '$.genre')").
-		Columns("json_extract(value, '$.id') id", "json_extract(value, '$.value') name").
-		GroupBy("name")
-
-	var res model.Stats
-	err := r.queryAll(sel, &res)
-	return res, err
-}
-
-func (r *statRepository) SongStats(from time.Time, to time.Time, ops ...model.QueryOptions) (model.Stats, error) {
-	sel := r.baseSelect(from, to, ops...).
-		Columns("f.id", "f.title name").
-		GroupBy("f.id")
-
-	var res model.Stats
-	err := r.queryAll(sel, &res)
-
-	return res, err
+	return res.Count, err
 }
 
 func (r *statRepository) RecordPlay(id string, ts time.Time) error {

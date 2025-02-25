@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
-import { Loading } from 'react-admin'
+import { useMemo, useState } from 'react'
 import { Bar } from 'react-chartjs-2'
 
 import { makeOptions } from './options'
 import { useStat } from './useStat'
+import { Pagination } from './Pagination'
 
 interface BarChartProps {
   count: number
@@ -12,7 +12,8 @@ interface BarChartProps {
 }
 
 const GenreChart = ({ count, from, to }: BarChartProps) => {
-  const [genres, loading] = useStat('genre', from, to, count)
+  const [page, setPage] = useState(1)
+  const [genres, loading, total] = useStat('genre', from, to, page, count)
 
   const [values, labels] = useMemo(() => {
     const labels: string[] = new Array(genres.length)
@@ -26,19 +27,20 @@ const GenreChart = ({ count, from, to }: BarChartProps) => {
     return [values, labels]
   }, [genres])
 
-  if (loading) {
-    return <Loading />
-  }
-
   return (
-    <Bar
-      options={makeOptions(false, 'Top genres')}
-      updateMode="show"
-      data={{
-        datasets: [{ data: values }],
-        labels,
-      }}
-    />
+    <>
+      <Bar
+        options={makeOptions(false, `Top genres: (${count} / ${total})`)}
+        updateMode="show"
+        data={{
+          datasets: [{ data: values }],
+          labels,
+        }}
+      />
+      {(!loading || total !== -1) && (
+        <Pagination setPage={setPage} count={count} page={page} total={total} />
+      )}
+    </>
   )
 }
 
