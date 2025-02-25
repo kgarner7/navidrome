@@ -221,7 +221,7 @@ func (db *MockDataStore) Stat(ctx context.Context) model.StatRepository {
 	return db.MockedStat
 }
 
-func (db *MockDataStore) WithTx(block func(model.DataStore) error) error {
+func (db *MockDataStore) WithTx(block func(tx model.DataStore) error, label ...string) error {
 	return block(db)
 }
 
