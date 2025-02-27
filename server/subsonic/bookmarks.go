@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server/subsonic/responses"
@@ -190,13 +189,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 		repo := api.ds.PlayQueue(ctx)
 		err = repo.Store(pq)
 	} else {
-		err = api.ds.WithTx(func(tx model.DataStore) error {
-			tmpID := uuid.NewString()
-			_ = tx.Property(ctx).Put("tmp_"+tmpID, "")
-			defer func() {
-				_ = tx.Property(ctx).Delete("tmp_" + tmpID)
-			}()
-
+		err = api.ds.WithTxImmediate(func(tx model.DataStore) error {
 			repo := tx.PlayQueue(ctx)
 			pq, err := repo.Get(user.ID)
 			if err != nil {
