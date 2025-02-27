@@ -46,9 +46,9 @@ func (r *statRepository) Stats(statType model.StatType, from time.Time, to time.
 			Join("album a on a.id = f.album_id").
 			GroupBy("a.id")
 	case model.ArtistStat:
-		sel = sel.Columns("a.id", "a.name").
-			Join("artist a on a.id = f.artist_id").
-			GroupBy("a.id")
+		sel = sel.From("scrobbles, json_each(f.participants, '$.artist')").
+			Columns("json_extract(value, '$.id') id", "json_extract(value, '$.name') name").
+			GroupBy("name")
 	case model.GenreStat:
 		sel = sel.From("scrobbles, json_each(f.tags, '$.genre')").
 			Columns("json_extract(value, '$.id') id", "json_extract(value, '$.value') name").
