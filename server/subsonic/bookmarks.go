@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server/subsonic/responses"
@@ -156,8 +157,11 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 		return nil, newError(responses.ErrorGeneric, "Index cannot exceed length of queue")
 	}
 
-	user, _ := request.UserFrom(r.Context())
-	client, _ := request.ClientFrom(r.Context())
+	ctx := r.Context()
+	user, _ := request.UserFrom(ctx)
+	client, _ := request.ClientFrom(ctx)
+
+	var err error
 
 	if len(ids) > 0 {
 		position := p.Int64Or("position", 0)
@@ -183,41 +187,45 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 			UpdatedAt:  time.Time{},
 		}
 
-		repo := api.ds.PlayQueue(r.Context())
-		err := repo.Store(pq)
-		if err != nil {
-			return nil, err
-		}
-	}
+		repo := api.ds.PlayQueue(ctx)
+		err = repo.Store(pq)
+	} else {
+		err = api.ds.WithTx(func(tx model.DataStore) error {
+			tmpID := uuid.NewString()
+			_ = tx.Property(ctx).Put("tmp_"+tmpID, "")
+			defer func() {
+				_ = tx.Property(ctx).Delete("tmp_" + tmpID)
+			}()
 
-	err := api.ds.WithTx(func(tx model.DataStore) error {
-		repo := tx.PlayQueue(r.Context())
-		pq, err := repo.Get(user.ID)
-		if err != nil {
+			repo := tx.PlayQueue(ctx)
+			pq, err := repo.Get(user.ID)
+			if err != nil {
+				return err
+			}
+
+			if queueIdx > int64(len(pq.Items)) {
+				return errors.New("position cannot exceed queue length")
+			}
+
+			if queueIdx != 0 {
+				pq.QueueIndex = queueIdx
+				pq.Current = pq.Items[queueIdx-1].ID
+			}
+
+			position := p.Int64Or("position", -1)
+
+			if position != -1 {
+				pq.Position = position
+			}
+
+			err = repo.Save(pq)
 			return err
-		}
-
-		if queueIdx > int64(len(pq.Items)) {
-			return errors.New("position cannot exceed queue length")
-		}
-
-		if queueIdx != 0 {
-			pq.QueueIndex = queueIdx
-			pq.Current = pq.Items[queueIdx-1].ID
-		}
-
-		position := p.Int64Or("position", -1)
-
-		if position != -1 {
-			pq.Position = position
-		}
-
-		err = repo.Save(pq)
-		return err
-	})
+		})
+	}
 
 	if err != nil {
 		return nil, err
 	}
+
 	return newResponse(), nil
 }
