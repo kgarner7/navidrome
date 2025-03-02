@@ -1,6 +1,6 @@
 import type { AnnotationOptions } from 'chartjs-plugin-annotation'
 import type { Chart, Plugin } from 'chart.js'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Loading, useRedirect } from 'react-admin'
 import { Bar } from 'react-chartjs-2'
 
@@ -44,6 +44,15 @@ const BarChartWithImage = ({
   const redirect = useRedirect()
 
   const [data, loading, total] = useStat(type, from, to, page, count)
+  const [, setSeenItems] = useState<string[]>([])
+
+  useEffect(() => {
+    setSeenItems([])
+  }, [from, to, page, count])
+
+  useEffect(() => {
+    setPage(1)
+  }, [count])
 
   const plugin = useCallback(() => {
     const data: Plugin = {
@@ -78,6 +87,16 @@ const BarChartWithImage = ({
           )
           const img = new Image(size, size)
           img.src = subsonic.getCoverArtUrl(augmentStat(type, stat), 300)
+          img.onload = () => {
+            setSeenItems((items) => {
+              if (!items.includes(stat.id)) {
+                ctx.chart.update()
+                return items.concat(stat.id)
+              }
+
+              return items
+            })
+          }
           return img
         },
         position: { x: 'start' },
@@ -112,7 +131,7 @@ const BarChartWithImage = ({
       <Bar
         ref={barRef}
         options={options}
-        updateMode="show"
+        updateMode="none"
         data={{
           datasets: [{ data: values }],
           labels,

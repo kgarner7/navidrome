@@ -31,7 +31,7 @@ const GenreChart = ({ count, from, to }: BarChartProps) => {
     <>
       <Bar
         options={makeOptions(false, `Top genres: (${count} / ${total})`)}
-        updateMode="show"
+        updateMode="none"
         data={{
           datasets: [{ data: values }],
           labels,
