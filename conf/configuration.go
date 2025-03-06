@@ -53,7 +53,6 @@ type configOptions struct {
 	PlaylistsPath                   string
 	SmartPlaylistRefreshDelay       time.Duration
 	AutoTranscodeDownload           bool
-	EnableDuplicateSearch           bool
 	DefaultDownsamplingFormat       string
 	SearchFullString                bool
 	RecentlyAddedByModTime          bool
@@ -446,7 +445,6 @@ func init() {
 	viper.SetDefault("autotranscodedownload", false)
 
 	// Config options only valid for file/env configuration
-	viper.SetDefault("enableduplicatesearch", false)
 	viper.SetDefault("defaultdownsamplingformat", consts.DefaultDownsamplingFormat)
 	viper.SetDefault("searchfullstring", false)
 	viper.SetDefault("recentlyaddedbymodtime", false)
