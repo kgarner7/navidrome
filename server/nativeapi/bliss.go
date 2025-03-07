@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -25,6 +26,11 @@ func (n *Router) instantMix() http.HandlerFunc {
 			return
 		}
 
+		count := p.IntOr("count", 50)
+		if count < 1 || count > 50 {
+			count = 50
+		}
+
 		mfRepo := n.ds.MediaFile(ctx)
 
 		mf, err := mfRepo.Get(id)
@@ -36,9 +42,16 @@ func (n *Router) instantMix() http.HandlerFunc {
 
 		blissPath := strings.Replace(mf.AbsolutePath(), conf.Server.Bliss.RemovePrefix, conf.Server.Bliss.PrependPrefix, 1)
 
-		output, err := exec.Command(conf.Server.Bliss.Path, "playlist", blissPath).Output()
+		output, err := exec.Command(
+			conf.Server.Bliss.Path,
+			"playlist",
+			"--playlist-length", strconv.Itoa(count),
+			"--config-path", conf.Server.Bliss.ConfigPath,
+			blissPath,
+		).CombinedOutput()
 
 		if err != nil {
+			log.Error(ctx, "failed to do instant mix", "output", string(output), "error", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -49,10 +62,10 @@ func (n *Router) instantMix() http.HandlerFunc {
 			// bliss `library` output has each line surrounded by quotes
 			// remove the first and last character
 			withoutQuotes := mediaFilePath[i][1 : len(mediaFilePath[i])-1]
-			mediaFilePath[i] = strings.Replace(withoutQuotes, conf.Server.Bliss.PrependPrefix, conf.Server.Bliss.RemovePrefix, 1)[len(conf.Server.MusicFolder):]
+			mediaFilePath[i] = strings.Replace(withoutQuotes, conf.Server.Bliss.PrependPrefix, conf.Server.Bliss.RemovePrefix, 1)
 		}
 
-		files, err := mfRepo.FindByPaths(mediaFilePath)
+		files, err := mfRepo.FindByAbsolutePaths(mediaFilePath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

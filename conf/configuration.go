@@ -206,6 +206,7 @@ type inspectOptions struct {
 type blissOptions struct {
 	Enabled       bool
 	Path          string
+	ConfigPath    string
 	RemovePrefix  string
 	PrependPrefix string
 }
@@ -536,6 +537,7 @@ func init() {
 
 	viper.SetDefault("bliss.enabled", false)
 	viper.SetDefault("bliss.path", "")
+	viper.SetDefault("bliss.configpath", "")
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
