@@ -188,6 +188,15 @@ func (r *mediaFileRepository) FindByPaths(paths []string) (model.MediaFiles, err
 	return res.toModels(), nil
 }
 
+func (r *mediaFileRepository) FindByAbsolutePaths(paths []string) (model.MediaFiles, error) {
+	sel := r.selectMediaFile().Where(Eq{"concat(library.path, media_file.path) collate nocase": paths})
+	var res dbMediaFiles
+	if err := r.queryAll(sel, &res); err != nil {
+		return nil, err
+	}
+	return res.toModels(), nil
+}
+
 func (r *mediaFileRepository) FindWithMbid(ids []string) (model.MediaFiles, error) {
 	sel := r.newSelect().Column("id").Where(Eq{"mbz_recording_id": ids}).GroupBy("mbz_recording_id")
 

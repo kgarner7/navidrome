@@ -101,6 +101,8 @@ type configOptions struct {
 	ListenBrainz listenBrainzOptions
 	Tags         map[string]TagConf
 
+	Bliss blissOptions
+
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	DevLogSourceLine                 bool
 	DevLogLevels                     map[string]string
@@ -199,6 +201,13 @@ type inspectOptions struct {
 	MaxRequests    int
 	BacklogLimit   int
 	BacklogTimeout int
+}
+
+type blissOptions struct {
+	Enabled       bool
+	Path          string
+	RemovePrefix  string
+	PrependPrefix string
 }
 
 var (
@@ -524,6 +533,9 @@ func init() {
 	viper.SetDefault("inspect.maxrequests", 1)
 	viper.SetDefault("inspect.backloglimit", consts.RequestThrottleBacklogLimit)
 	viper.SetDefault("inspect.backlogtimeout", consts.RequestThrottleBacklogTimeout)
+
+	viper.SetDefault("bliss.enabled", false)
+	viper.SetDefault("bliss.path", "")
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)

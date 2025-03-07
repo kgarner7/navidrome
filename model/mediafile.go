@@ -324,6 +324,7 @@ type MediaFileRepository interface {
 	Delete(id string) error
 	DeleteMissing(ids []string) error
 	FindByPaths(paths []string) (MediaFiles, error)
+	FindByAbsolutePaths(paths []string) (MediaFiles, error)
 
 	// Queries by path to support the scanner, no Annotations or Bookmarks required in the response
 	FindWithMbid(ids []string) (MediaFiles, error)
