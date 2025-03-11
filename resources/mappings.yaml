@@ -13,7 +13,7 @@ artists:
   split: [" / ", " feat. ", " feat ", " ft. ", " ft ", "; "]
 # Applies to all remaining single-valued role tags (composer, lyricist, arranger...)
 roles:
-  split: ["/", ";"]
+  split: [" / ", ";"]
 
 # These tags are handled directly by Navidrome. You can add/remove/reorder aliases, but changing the tag name
 # may require code changes
