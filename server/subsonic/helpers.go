@@ -242,7 +242,7 @@ func osChildFromMediaFile(ctx context.Context, mf model.MediaFile) *responses.Op
 	child.DisplayAlbumArtist = mf.AlbumArtist
 	child.AlbumArtists = artistRefs(mf.Participants[model.RoleAlbumArtist])
 	var contributors []responses.Contributor
-	child.DisplayComposer = mf.Participants[model.RoleComposer].Join(" • ")
+	child.DisplayComposer = mf.Participants[model.RoleComposer].Join(consts.ArtistJoiner)
 	for role, participants := range mf.Participants {
 		if role == model.RoleArtist || role == model.RoleAlbumArtist {
 			continue
