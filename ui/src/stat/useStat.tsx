@@ -2,6 +2,7 @@ import { useQueryWithStore } from 'react-admin'
 
 export interface Stat {
   count: number
+  duration?: number
   id: string
   name: string
 }

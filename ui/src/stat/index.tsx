@@ -28,6 +28,8 @@ import httpClient from '../dataProvider/httpClient'
 import BarChartWithImage from './BarChartWithImage'
 import GenreChart from './GenreChart'
 import BufferedNumberInput from './BufferedNumberInput'
+import { useStat } from './useStat'
+import { formatDuration } from '../utils/formatters'
 
 Chart.register(
   Annotation,
@@ -90,6 +92,8 @@ const Stat = () => {
       format(end, MUI_DATE_FORMAT),
     ]
   }, [end, start])
+
+  const [aggregate, loading] = useStat('total', startTs, endTs, 1, 1)
 
   const setParam = useCallback(
     (k: 'start' | 'end' | 'count', val: string) => {
@@ -163,6 +167,13 @@ const Stat = () => {
           />
         </Grid>
       </Grid>
+
+      {!loading && (
+        <h2 style={{ textAlign: 'center' }}>
+          Duration: {formatDuration(aggregate[0].duration ?? 0)}, Listens:{' '}
+          {aggregate[0].count}
+        </h2>
+      )}
 
       <BarChartWithImage
         count={count}

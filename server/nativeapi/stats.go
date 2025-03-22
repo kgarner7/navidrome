@@ -29,6 +29,8 @@ func (n *Router) getStats() http.HandlerFunc {
 			stat = model.GenreStat
 		case "song":
 			stat = model.SongStat
+		case "total":
+
 		default:
 			http.Error(w, "Invalid stat type", http.StatusBadRequest)
 		}
@@ -38,24 +40,41 @@ func (n *Router) getStats() http.HandlerFunc {
 		start := p.IntOr("_start", 0)
 		end := p.IntOr("_end", start+5)
 
-		ops := model.QueryOptions{
-			Max:    end - start,
-			Offset: start,
-		}
+		var count int64
+		var data any
+		var err error
 
-		data, err := n.ds.Stat(ctx).Stats(stat, from, to, ops)
+		if typeString == "total" {
+			data, err = n.ds.Stat(ctx).Total(from, to)
 
-		if err != nil {
-			log.Error(ctx, "Error getting media stats", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+			if err != nil {
+				log.Error(ctx, "Error getting aggregate stats", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 
-		count, err := n.ds.Stat(ctx).StatsCount(stat, from, to)
-		if err != nil {
-			log.Error(ctx, "Error getting media count", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			count = 1
+		} else {
+			ops := model.QueryOptions{
+				Max:    end - start,
+				Offset: start,
+			}
+
+			data, err = n.ds.Stat(ctx).Stats(stat, from, to, ops)
+
+			if err != nil {
+				log.Error(ctx, "Error getting media stats", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			count, err = n.ds.Stat(ctx).StatsCount(stat, from, to)
+			if err != nil {
+				log.Error(ctx, "Error getting media count", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
 		}
 
 		w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
