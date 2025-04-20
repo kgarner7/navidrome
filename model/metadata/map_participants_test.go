@@ -600,7 +600,7 @@ var _ = Describe("Participants", func() {
 		When("the tag is single valued", func() {
 			It("should split the values by the configured separator", func() {
 				mf = toMediaFile(model.RawTags{
-					"COMPOSER": {"John Doe/Someone Else/The Album Artist"},
+					"COMPOSER": {"John Doe; Someone Else; The Album Artist"},
 				})
 
 				participants := mf.Participants
@@ -612,7 +612,7 @@ var _ = Describe("Participants", func() {
 			})
 			It("should not add an empty participant after split", func() {
 				mf = toMediaFile(model.RawTags{
-					"COMPOSER": {"John Doe/"},
+					"COMPOSER": {"John Doe;    "},
 				})
 
 				participants := mf.Participants
@@ -622,7 +622,7 @@ var _ = Describe("Participants", func() {
 			})
 			It("should trim the values", func() {
 				mf = toMediaFile(model.RawTags{
-					"COMPOSER": {"John Doe / Someone Else / The Album Artist"},
+					"COMPOSER": {"John Doe   /   Someone Else /   The Album Artist"},
 				})
 
 				participants := mf.Participants

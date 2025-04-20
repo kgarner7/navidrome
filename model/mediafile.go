@@ -186,6 +186,8 @@ func (mfs MediaFiles) ToAlbum() Album {
 	tags := make(TagList, 0, len(mfs[0].Tags)*len(mfs))
 
 	a.Missing = true
+	embedArtPath := ""
+	embedArtDisc := 0
 	for _, m := range mfs {
 		// We assume these attributes are all the same for all songs in an album
 		a.ID = m.AlbumID
@@ -214,9 +216,6 @@ func (mfs MediaFiles) ToAlbum() Album {
 		comments = append(comments, m.Comment)
 		mbzAlbumIds = append(mbzAlbumIds, m.MbzAlbumID)
 		mbzReleaseGroupIds = append(mbzReleaseGroupIds, m.MbzReleaseGroupID)
-		if m.HasCoverArt && a.EmbedArtPath == "" {
-			a.EmbedArtPath = m.Path
-		}
 		if m.DiscNumber > 0 {
 			a.Discs.Add(m.DiscNumber, m.DiscSubtitle)
 		}
@@ -224,6 +223,9 @@ func (mfs MediaFiles) ToAlbum() Album {
 		explicit = explicit && m.Explicit
 		tags = append(tags, m.Tags.FlattenAll()...)
 		a.Participants.Merge(m.Participants)
+
+		// Find the MediaFile with cover art and the lowest disc number to use for album cover
+		embedArtPath, embedArtDisc = firstArtPath(embedArtPath, embedArtDisc, m)
 
 		if m.ExplicitStatus == "c" && a.ExplicitStatus != "e" {
 			a.ExplicitStatus = "c"
@@ -236,6 +238,7 @@ func (mfs MediaFiles) ToAlbum() Album {
 		a.Missing = a.Missing && m.Missing
 	}
 
+	a.EmbedArtPath = embedArtPath
 	a.SetTags(tags)
 	a.FolderIDs = slice.Unique(slice.Map(mfs, func(m MediaFile) string { return m.FolderID }))
 	a.Date, _ = allOrNothing(dates)
@@ -309,6 +312,28 @@ func fixAlbumArtist(a *Album) {
 		a.AlbumArtist = consts.VariousArtists
 		a.AlbumArtistID = consts.VariousArtistsID
 	}
+}
+
+// firstArtPath determines which media file path should be used for album artwork
+// based on disc number (preferring lower disc numbers) and path (for consistency)
+func firstArtPath(currentPath string, currentDisc int, m MediaFile) (string, int) {
+	if !m.HasCoverArt {
+		return currentPath, currentDisc
+	}
+
+	// If current has no disc number (currentDisc == 0) or new file has lower disc number
+	if currentDisc == 0 || (m.DiscNumber < currentDisc && m.DiscNumber > 0) {
+		return m.Path, m.DiscNumber
+	}
+
+	// If disc numbers are equal, use path for ordering
+	if m.DiscNumber == currentDisc {
+		if m.Path < currentPath || currentPath == "" {
+			return m.Path, m.DiscNumber
+		}
+	}
+
+	return currentPath, currentDisc
 }
 
 type MediaFileCursor iter.Seq2[MediaFile, error]
