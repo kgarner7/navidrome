@@ -38,7 +38,7 @@ func (r *statRepository) baseSelect(from time.Time, to time.Time, ops ...model.Q
 }
 
 func (r *statRepository) Total(from time.Time, to time.Time) (model.AggregateStats, error) {
-	sel := r.baseSelect(from, to).Columns("SUM(f.duration) duration", "'total' id")
+	sel := r.baseSelect(from, to).Columns("IFNULL(SUM(f.duration), 0) duration", "'total' id")
 
 	var res model.AggregateStats
 	err := r.queryAll(sel, &res)
