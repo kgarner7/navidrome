@@ -74,7 +74,6 @@ func (n *Router) getStats() http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-
 		}
 
 		w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))

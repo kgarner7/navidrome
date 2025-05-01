@@ -94,6 +94,7 @@ type configOptions struct {
 	PID                             pidOptions
 	Inspect                         inspectOptions
 	Subsonic                        subsonicOptions
+	LyricsPriority                  string
 
 	Agents       string
 	LastFM       lastfmOptions
@@ -557,6 +558,7 @@ func init() {
 	viper.SetDefault("bliss.enabled", false)
 	viper.SetDefault("bliss.path", "")
 	viper.SetDefault("bliss.configpath", "")
+	viper.SetDefault("lyricspriority", ".lrc,.txt,embedded")
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)

@@ -40,10 +40,17 @@ func (n *Router) instantMix() http.HandlerFunc {
 			return
 		}
 
+		blissExe, err := exec.LookPath(conf.Server.Bliss.Path)
+		if err != nil {
+			log.Error(ctx, "Could not find bliss executable", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		blissPath := strings.Replace(mf.AbsolutePath(), conf.Server.Bliss.RemovePrefix, conf.Server.Bliss.PrependPrefix, 1)
 
 		output, err := exec.Command(
-			conf.Server.Bliss.Path,
+			blissExe,
 			"playlist",
 			"--playlist-length", strconv.Itoa(count),
 			"--config-path", conf.Server.Bliss.ConfigPath,
