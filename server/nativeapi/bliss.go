@@ -31,6 +31,8 @@ func (n *Router) instantMix() http.HandlerFunc {
 			count = 50
 		}
 
+		count += 1
+
 		mfRepo := n.ds.MediaFile(ctx)
 
 		mf, err := mfRepo.Get(id)
