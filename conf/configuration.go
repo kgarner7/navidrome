@@ -152,6 +152,7 @@ type TagConf struct {
 	MaxLength int      `yaml:"maxLength"`
 	Split     []string `yaml:"split"`
 	Album     bool     `yaml:"album"`
+	Song      bool     `yaml:"song"`
 }
 
 type lastfmOptions struct {

@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -22,20 +23,37 @@ func NewTagRepository(ctx context.Context, db dbx.Builder) model.TagRepository {
 	r.ctx = ctx
 	r.db = db
 	r.tableName = "tag"
-	r.registerModel(&model.Tag{}, nil)
+	r.registerModel(&model.Tag{}, map[string]filterFunc{
+		"song": booleanFilter,
+	})
 	return r
 }
 
 func (r *tagRepository) Add(tags ...model.Tag) error {
+	conf := model.TagMappings()
+
 	for chunk := range slices.Chunk(tags, 200) {
-		sq := Insert(r.tableName).Columns("id", "tag_name", "tag_value").
+		sq := Insert(r.tableName).Columns("id", "tag_name", "tag_value", "song").
 			Suffix("on conflict (id) do nothing")
+
+		hasValues := false
 		for _, t := range chunk {
-			sq = sq.Values(t.ID, t.TagName, t.TagValue)
+			c := conf[t.TagName]
+
+			if !c.Album && !c.Song {
+				continue
+			}
+
+			hasValues = true
+			song := conf[t.TagName].Song
+			sq = sq.Values(t.ID, t.TagName, t.TagValue, song)
 		}
-		_, err := r.executeSQL(sq)
-		if err != nil {
-			return err
+
+		if hasValues {
+			_, err := r.executeSQL(sq)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -73,16 +91,41 @@ where tag.id = updated_values.id;
 func (r *tagRepository) purgeUnused() error {
 	del := Delete(r.tableName).Where(`	
 	id not in (select jt.value
-	from album left join json_tree(album.tags, '$') as jt
+	from media_file left join json_tree(media_file.tags, '$') as jt
 	where atom is not null
 	  and key = 'id')
 `)
 	c, err := r.executeSQL(del)
-	if err != nil {
-		return fmt.Errorf("error purging unused tags: %w", err)
+
+	conf := model.TagMappings()
+	allowedTags := []model.TagName{}
+
+	for tag, tagConf := range conf {
+		if tagConf.Album || tagConf.Song {
+			allowedTags = append(allowedTags, tag)
+		}
 	}
-	if c > 0 {
-		log.Debug(r.ctx, "Purged unused tags", "totalDeleted", c)
+
+	if err != nil {
+		err = fmt.Errorf("error purging unused tags: %w", err)
+	}
+
+	confDel := Delete(r.tableName).Where(NotEq{"tag_name": allowedTags})
+	c2, err2 := r.executeSQL(confDel)
+
+	if err2 != nil {
+		err2 = fmt.Errorf("error removing non-configured tags: %w", err)
+	}
+
+	combined := errors.Join(err, err2)
+	if combined != nil {
+		return combined
+	}
+
+	totalCount := c + c2
+
+	if totalCount > 0 {
+		log.Debug(r.ctx, "Purged unused tags", "totalDeleted", totalCount)
 	}
 	return err
 }

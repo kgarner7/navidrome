@@ -125,6 +125,7 @@ main:
     type: date
   catalognumber:
     aliases: [ txxx:catalognumber, catalognumber, ----:com.apple.itunes:catalognumber, wm/catalogno ]
+    song: true
   musicbrainz_artistid:
     aliases: [ txxx:musicbrainz artist id, musicbrainz_artistid, musicbrainz artist id, ----:com.apple.itunes:musicbrainz artist id, musicbrainz/artist id ]
     type: uuid
@@ -211,10 +212,6 @@ additional:
     aliases: [ txxx:barcode, barcode, ----:com.apple.itunes:barcode, wm/barcode ]
   copyright:
     aliases: [ tcop, copyright, cprt, icop ]
-  encodedby:
-    aliases: [ tenc, encodedby, ©too, wm/encodedby, ienc ]
-  encodersettings:
-    aliases: [ tsse, encodersettings, ----:com.apple.itunes:encodersettings, wm/encodingsettings ]
   grouping:
     aliases: [ grp1, grouping, ©grp, wm/contentgroupdescription ]
     album: true
@@ -224,6 +221,7 @@ additional:
     aliases: [ tsrc, isrc, ----:com.apple.itunes:isrc, wm/isrc ]
   language:
     aliases: [ tlan, language, ----:com.apple.itunes:language, wm/language, ilng ]
+    song: true
   license:
     aliases: [ wcop, txxx:license, license, ----:com.apple.itunes:license ]
   media:
@@ -255,9 +253,11 @@ additional:
     album: true
   script:
     aliases: [ txxx:script, script, ----:com.apple.itunes:script, wm/script ]
+    song: true
   subtitle:
     aliases: [ tit3, subtitle, ----:com.apple.itunes:subtitle, wm/subtitle ]
   website:
     aliases: [ woar, website, weblink, wm/authorurl ]
   work:
     aliases: [ txxx:work, tit1, work, ©wrk, wm/work ]
+    song: true

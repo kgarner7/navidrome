@@ -17,6 +17,7 @@ type Tag struct {
 	TagValue       string  `json:"tagValue,omitempty"`
 	AlbumCount     int     `json:"albumCount,omitempty"`
 	MediaFileCount int     `json:"songCount,omitempty"`
+	Song           bool    `json:"bool,omitempty"`
 }
 
 type TagList []Tag

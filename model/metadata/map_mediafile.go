@@ -101,8 +101,9 @@ func (md Metadata) ToMediaFile(libID int, folderID string) model.MediaFile {
 	// MediaFile struct. This is to avoid redundancy in the DB
 	//
 	// Remove all tags from the main section that are not flagged as album tags
-	for tag, conf := range model.TagMainMappings() {
-		if !conf.Album {
+	conf := model.TagMainMappings()
+	for tag := range mf.Tags {
+		if item, ok := conf[tag]; ok && !item.Album && !item.Song {
 			delete(mf.Tags, tag)
 		}
 	}

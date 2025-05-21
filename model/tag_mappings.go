@@ -31,6 +31,7 @@ type TagConf struct {
 	MaxLength int            `yaml:"maxLength"`
 	Split     []string       `yaml:"split"`
 	Album     bool           `yaml:"album"`
+	Song      bool           `yaml:"song"`
 	SplitRx   *regexp.Regexp `yaml:"-"`
 }
 
@@ -210,6 +211,7 @@ func loadTagMappings() {
 			Type:      cmp.Or(TagType(cfg.Type), oldValue.Type),
 			MaxLength: cmp.Or(cfg.MaxLength, oldValue.MaxLength),
 			Album:     cmp.Or(cfg.Album, oldValue.Album),
+			Song:      cmp.Or(cfg.Song, oldValue.Song),
 		}
 		c.SplitRx = compileSplitRegex(TagName(tag), c.Split)
 		if _, ok := _mappings.Main[TagName(tag)]; ok {
