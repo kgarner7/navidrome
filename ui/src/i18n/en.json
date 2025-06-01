@@ -41,6 +41,7 @@
         "addToQueue": "Play Later",
         "playNow": "Play Now",
         "addToPlaylist": "Add to Playlist",
+        "showInPlaylist": "Show in Playlist",
         "shuffleAll": "Shuffle All",
         "download": "Download",
         "playNext": "Play Next",
@@ -200,12 +201,16 @@
         "saveQueue": "Save Queue to Playlist",
         "makePublic": "Make Public",
         "makePrivate": "Make Private",
-        "viewOriginal": "View original",
-        "sync": "Sync from source"
+        "pressEnterToCreate": "Press Enter to create new playlist",
+        "removeFromSelection": "Remove from selection",
+        "removeSymbol": "×",
+        "viewOriginal": "View original"
       },
       "message": {
         "duplicate_song": "Add duplicated songs",
-        "song_exist": "There are duplicates being added to the playlist. Would you like to add the duplicates or skip them?"
+        "song_exist": "There are duplicates being added to the playlist. Would you like to add the duplicates or skip them?",
+        "noPlaylistsFound": "No playlists found",
+        "noPlaylists": "No playlists available"
       }
     },
     "radio": {
