@@ -74,6 +74,7 @@ func (n *Router) routes() http.Handler {
 		n.addKeepAliveRoute(r)
 		n.addInsightsRoute(r)
 
+		n.addInspectMixRoute(r)
 		n.externalPlaylistRoutes(r)
 		n.stats(r)
 	})
