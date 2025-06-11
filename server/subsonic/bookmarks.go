@@ -160,61 +160,31 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 	user, _ := request.UserFrom(ctx)
 	client, _ := request.ClientFrom(ctx)
 
-	var err error
+	position := p.Int64Or("position", 0)
 
-	if len(ids) > 0 {
-		position := p.Int64Or("position", 0)
-
-		var items model.MediaFiles
-		for _, id := range ids {
-			items = append(items, model.MediaFile{ID: id})
-		}
-
-		var current = ""
-		if queueIdx > 0 {
-			current = ids[queueIdx-1]
-		}
-
-		pq := &model.PlayQueue{
-			UserID:     user.ID,
-			Current:    current,
-			QueueIndex: queueIdx,
-			Position:   position,
-			ChangedBy:  client,
-			Items:      items,
-			CreatedAt:  time.Time{},
-			UpdatedAt:  time.Time{},
-		}
-
-		repo := api.ds.PlayQueue(ctx)
-		err = repo.Store(pq)
-	} else {
-		err = api.ds.WithTxImmediate(func(tx model.DataStore) error {
-			repo := tx.PlayQueue(ctx)
-			pq, err := repo.Get(user.ID)
-			if err != nil {
-				return err
-			}
-
-			if queueIdx > int64(len(pq.Items)) {
-				return errors.New("position cannot exceed queue length")
-			}
-
-			if queueIdx != 0 {
-				pq.QueueIndex = queueIdx
-				pq.Current = pq.Items[queueIdx-1].ID
-			}
-
-			position := p.Int64Or("position", -1)
-
-			if position != -1 {
-				pq.Position = position
-			}
-
-			err = repo.Save(pq)
-			return err
-		})
+	var items model.MediaFiles
+	for _, id := range ids {
+		items = append(items, model.MediaFile{ID: id})
 	}
+
+	var current = ""
+	if queueIdx > 0 {
+		current = ids[queueIdx-1]
+	}
+
+	pq := &model.PlayQueue{
+		UserID:     user.ID,
+		Current:    current,
+		QueueIndex: queueIdx,
+		Position:   position,
+		ChangedBy:  client,
+		Items:      items,
+		CreatedAt:  time.Time{},
+		UpdatedAt:  time.Time{},
+	}
+
+	repo := api.ds.PlayQueue(ctx)
+	err := repo.Store(pq)
 
 	if err != nil {
 		return nil, err
