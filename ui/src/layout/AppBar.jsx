@@ -122,9 +122,9 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
 
   return (
     <>
-      {config.devActivityPanel && permissions === 'admin' && (
-        <NowPlayingPanel />
-      )}
+      {config.devActivityPanel &&
+        permissions === 'admin' &&
+        config.enableNowPlaying && <NowPlayingPanel />}
       {config.devActivityPanel && permissions === 'admin' && <ActivityPanel />}
       <UserMenu {...rest}>
         <MenuLink
