@@ -84,7 +84,6 @@ type MediaFile struct {
 	RGTrackGain          *float64 `structs:"rg_track_gain" json:"rgTrackGain"`
 	RGTrackPeak          *float64 `structs:"rg_track_peak" json:"rgTrackPeak"`
 	IgnoreScrobble       bool     `structs:"ignore_scrobble" json:"ignoreScrobble"`
-	Explicit             bool     `structs:"explicit" json:"explicit"`
 
 	Tags         Tags         `structs:"tags" json:"tags,omitempty" hash:"ignore"`       // All imported tags from the original file
 	Participants Participants `structs:"participants" json:"participants" hash:"ignore"` // All artists that participated in this track
@@ -183,7 +182,6 @@ func (mfs MediaFiles) ToAlbum() Album {
 	originalYears := make([]int, 0, len(mfs))
 	originalDates := make([]string, 0, len(mfs))
 	releaseDates := make([]string, 0, len(mfs))
-	explicit := true
 	tags := make(TagList, 0, len(mfs[0].Tags)*len(mfs))
 
 	a.Missing = true
@@ -221,7 +219,6 @@ func (mfs MediaFiles) ToAlbum() Album {
 			a.Discs.Add(m.DiscNumber, m.DiscSubtitle)
 		}
 
-		explicit = explicit && m.Explicit
 		tags = append(tags, m.Tags.FlattenAll()...)
 		a.Participants.Merge(m.Participants)
 
@@ -249,7 +246,6 @@ func (mfs MediaFiles) ToAlbum() Album {
 	a.MinOriginalYear, a.MaxOriginalYear = minMax(originalYears)
 	a.Comment, _ = allOrNothing(comments)
 	a.MbzAlbumID = slice.MostFrequent(mbzAlbumIds)
-	a.Explicit = explicit
 	a.MbzReleaseGroupID = slice.MostFrequent(mbzReleaseGroupIds)
 	fixAlbumArtist(&a)
 

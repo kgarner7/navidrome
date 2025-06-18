@@ -91,7 +91,6 @@ func (md Metadata) ToMediaFile(libID int, folderID string) model.MediaFile {
 	mf.SortAlbumArtistName = mf.Participants.First(model.RoleAlbumArtist).SortArtistName
 
 	// Custom properties
-	mf.Explicit = md.Explicit()
 	mf.IgnoreScrobble = md.IgnoreScrobble()
 
 	delete(mf.Tags, "noscrobble")

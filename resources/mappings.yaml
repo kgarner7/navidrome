@@ -197,9 +197,7 @@ main:
     aliases: [ txxx:musicbrainz performer id, musicbrainz_performerid, musicbrainz_performer_id, ----:com.apple.itunes:musicbrainz performer id, musicbrainz/performer id ]
     type: pair
   explicitstatus:
-    aliases: [ itunesadvisory, rtng ]
-  explicit:
-    aliases: [explicit]
+    aliases: [ explicit, itunesadvisory, rtng ]
   noscrobble:
     aliases: [noscrobble]
 
