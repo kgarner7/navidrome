@@ -88,6 +88,8 @@ type configOptions struct {
 	PasswordEncryptionKey           string
 	ReverseProxyUserHeader          string
 	ReverseProxyWhitelist           string
+	Plugins                         pluginsOptions
+	PluginConfig                    map[string]map[string]string
 	HTTPSecurityHeaders             secureOptions       `json:",omitzero"`
 	Prometheus                      prometheusOptions   `json:",omitzero"`
 	Scanner                         scannerOptions      `json:",omitzero"`
@@ -126,6 +128,7 @@ type configOptions struct {
 	DevScannerThreads                uint
 	DevInsightsInitialDelay          time.Duration
 	DevEnablePlayerInsights          bool
+	DevPluginCompilationTimeout      time.Duration
 }
 
 type scannerOptions struct {
@@ -221,6 +224,12 @@ type blissOptions struct {
 	PrependPrefix string
 }
 
+type pluginsOptions struct {
+	Enabled   bool
+	Folder    string
+	CacheSize string
+}
+
 var (
 	Server = &configOptions{}
 	hooks  []func()
@@ -257,6 +266,15 @@ func Load(noConfigDump bool) {
 	err = os.MkdirAll(Server.CacheFolder, os.ModePerm)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "FATAL: Error creating cache path:", err)
+		os.Exit(1)
+	}
+
+	if Server.Plugins.Folder == "" {
+		Server.Plugins.Folder = filepath.Join(Server.DataFolder, "plugins")
+	}
+	err = os.MkdirAll(Server.Plugins.Folder, 0700)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, "FATAL: Error creating plugins path:", err)
 		os.Exit(1)
 	}
 
@@ -509,6 +527,7 @@ func setViperDefaults() {
 	viper.SetDefault("coverartpriority", "cover.*, folder.*, front.*, embedded, external")
 	viper.SetDefault("coverjpegquality", 75)
 	viper.SetDefault("artistartpriority", "artist.*, album/artist.*, external")
+	viper.SetDefault("lyricspriority", ".lrc,.txt,embedded")
 	viper.SetDefault("enablegravatar", false)
 	viper.SetDefault("enablefavourites", true)
 	viper.SetDefault("enablestarrating", true)
@@ -547,7 +566,7 @@ func setViperDefaults() {
 	viper.SetDefault("scanner.genreseparators", "")
 	viper.SetDefault("scanner.groupalbumreleases", false)
 	viper.SetDefault("scanner.followsymlinks", true)
-	viper.SetDefault("scanner.purgemissing", "never")
+	viper.SetDefault("scanner.purgemissing", consts.PurgeMissingNever)
 	viper.SetDefault("subsonic.appendsubtitle", true)
 	viper.SetDefault("subsonic.artistparticipations", false)
 	viper.SetDefault("subsonic.defaultreportrealpath", false)
@@ -580,6 +599,11 @@ func setViperDefaults() {
 	viper.SetDefault("bliss.path", "")
 	viper.SetDefault("bliss.configpath", "")
 	viper.SetDefault("lyricspriority", ".lrc,.txt,embedded")
+	viper.SetDefault("plugins.folder", "")
+	viper.SetDefault("plugins.enabled", false)
+	viper.SetDefault("plugins.cachesize", "100MB")
+
+	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)
 	viper.SetDefault("devenableprofiler", false)
 	viper.SetDefault("devautocreateadminpassword", "")
@@ -599,6 +623,7 @@ func setViperDefaults() {
 	viper.SetDefault("devscannerthreads", 5)
 	viper.SetDefault("devinsightsinitialdelay", consts.InsightsInitialDelay)
 	viper.SetDefault("devenableplayerinsights", true)
+	viper.SetDefault("devplugincompilationtimeout", time.Minute)
 }
 
 func init() {
