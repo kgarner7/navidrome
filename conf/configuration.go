@@ -100,6 +100,7 @@ type configOptions struct {
 	Subsonic                        subsonicOptions     `json:",omitzero"`
 	LastFM                          lastfmOptions       `json:",omitzero"`
 	Spotify                         spotifyOptions      `json:",omitzero"`
+	Deezer                          deezerOptions       `json:",omitzero"`
 	ListenBrainz                    listenBrainzOptions `json:",omitzero"`
 	Tags                            map[string]TagConf  `json:",omitempty"`
 	Agents                          string
@@ -172,6 +173,10 @@ type lastfmOptions struct {
 type spotifyOptions struct {
 	ID     string
 	Secret string
+}
+
+type deezerOptions struct {
+	Enabled bool
 }
 
 type listenBrainzOptions struct {
@@ -399,6 +404,7 @@ func disableExternalServices() {
 	Server.EnableInsightsCollector = false
 	Server.LastFM.Enabled = false
 	Server.Spotify.ID = ""
+	Server.Deezer.Enabled = false
 	Server.ListenBrainz.Enabled = false
 	Server.Agents = ""
 	if Server.UILoginBackgroundURL == consts.DefaultUILoginBackgroundURL {
@@ -571,7 +577,6 @@ func setViperDefaults() {
 	viper.SetDefault("subsonic.artistparticipations", false)
 	viper.SetDefault("subsonic.defaultreportrealpath", false)
 	viper.SetDefault("subsonic.legacyclients", "DSub")
-
 	viper.SetDefault("agents", "lastfm,spotify,listenbrainz")
 	viper.SetDefault("lastfm.enabled", true)
 	viper.SetDefault("lastfm.language", "en")
@@ -580,6 +585,7 @@ func setViperDefaults() {
 	viper.SetDefault("lastfm.scrobblefirstartistonly", false)
 	viper.SetDefault("spotify.id", "")
 	viper.SetDefault("spotify.secret", "")
+	viper.SetDefault("deezer.enabled", false)
 	viper.SetDefault("listenbrainz.enabled", true)
 	viper.SetDefault("listenbrainz.baseurl", "https://api.listenbrainz.org/1/")
 
