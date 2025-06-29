@@ -130,11 +130,6 @@ type additionalInfo struct {
 	DurationMs              int      `json:"duration_ms,omitempty"`
 }
 
-type trackInfo struct {
-	RecordingName string `json:"recording_name"`
-	RecordingMbid string `json:"recording_mbid"`
-}
-
 func (c *client) validateToken(ctx context.Context, apiKey string) (*listenBrainzResponse, error) {
 	r := &listenBrainzRequest{
 		ApiKey: apiKey,

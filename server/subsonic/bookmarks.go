@@ -185,7 +185,7 @@ func (api *Router) SavePlayQueueAdvanced(r *http.Request) (*responses.Subsonic, 
 
 	pq := &model.PlayQueue{
 		UserID:    user.ID,
-		Current:   int(queueIdx),
+		Current:   queueIdx,
 		Position:  position,
 		ChangedBy: client,
 		Items:     items,
