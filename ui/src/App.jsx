@@ -15,7 +15,6 @@ import artist from './artist'
 import playlist from './playlist'
 import radio from './radio'
 import share from './share'
-import externalPlaylist from './externalPlaylist'
 import listen from './listen'
 import { Player } from './audioplayer'
 import customRoutes from './routes'
@@ -135,7 +134,6 @@ const Admin = (props) => {
         ) : null,
 
         <Resource name="translation" />,
-        <Resource name="externalPlaylist" {...externalPlaylist} />,
         <Resource name="genre" />,
         <Resource name="tag" />,
         <Resource name="playlistTrack" />,

@@ -196,9 +196,7 @@
         "songCount": "Songs",
         "comment": "Comment",
         "sync": "Auto-import",
-        "path": "Import from",
-        "external": "External",
-        "externalSync": "Sync from source"
+        "path": "Import from"
       },
       "actions": {
         "selectPlaylist": "Select a playlist:",
@@ -250,31 +248,6 @@
       },
       "notifications": {},
       "actions": {}
-    },
-    "externalPlaylist": {
-      "name": "External Playlist |||| External Playlists",
-      "fields": {
-        "name": "Name",
-        "agent": "Provider",
-        "type": "Playlist type",
-        "creator": "Creator",
-        "updatedAt": "Updated at",
-        "createdAt": "Created at",
-        "existing": "Existing",
-        "sync": "Periodically fetch",
-        "update": "Update existing playlists"
-      },
-      "notifications": {
-        "created": "External playlist imported |||| %{smart_count} external playlists imported",
-        "failed": "Could not import playlists: %{cause}"
-      },
-      "agent": {
-        "listenbrainz": {
-          "user": "Created by you",
-          "collab": "Playlist you collaborated",
-          "created": "Recommended playlist"
-        }
-      }
     },
     "listen": {
       "name": "Listen |||| Listens",

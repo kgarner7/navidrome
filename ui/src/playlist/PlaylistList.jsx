@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   Datagrid,
   DateField,
@@ -33,7 +33,6 @@ import PlaylistListActions from './PlaylistListActions'
 import ChangePublicStatusButton from './ChangePublicStatusButton'
 import { Inbox } from '@material-ui/icons'
 import config from '../config'
-import { ImportButton } from './ImportButton'
 
 const PREFIX = 'RaEmpty'
 
@@ -96,7 +95,6 @@ const Empty = () => {
       </div>
       <div className={EmptyClasses.toolbar}>
         <CreateButton variant="contained" />{' '}
-        {config.listenBrainzEnabled && <ImportButton />}
       </div>
       <div className={EmptyClasses.toolbar}></div>
     </Root>
@@ -212,7 +210,6 @@ const PlaylistList = (props) => {
         <TogglePublicInput source="public" sortByOrder={'DESC'} />
       ),
       comment: <TextField source="comment" />,
-      external: <BooleanField source="externalId" looseValue />,
       sync: <ToggleAutoImport source="sync" sortByOrder={'DESC'} />,
     }),
     [isDesktop, isXsmall],
