@@ -105,8 +105,7 @@ type configOptions struct {
 	Tags                            map[string]TagConf  `json:",omitempty"`
 	Agents                          string
 
-	PlaylistSyncSchedule string
-	Bliss                blissOptions
+	Bliss blissOptions
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	DevLogLevels                     map[string]string `json:",omitempty"`
@@ -316,7 +315,6 @@ func Load(noConfigDump bool) {
 	err = run.Sequentially(
 		validateScanSchedule,
 		validateBackupSchedule,
-		validatePlaylistSchedule,
 		validatePlaylistsPath,
 		validatePurgeMissingOption,
 	)
@@ -451,16 +449,6 @@ func validateScanSchedule() error {
 
 	var err error
 	Server.Scanner.Schedule, err = validateSchedule(Server.Scanner.Schedule, "Scanner.Schedule")
-	return err
-}
-
-func validatePlaylistSchedule() error {
-	if Server.PlaylistSyncSchedule == "" {
-		return nil
-	}
-
-	var err error
-	Server.PlaylistSyncSchedule, err = validateSchedule(Server.PlaylistSyncSchedule, "PlaylistSyncSchedule")
 	return err
 }
 
