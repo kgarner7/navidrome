@@ -213,7 +213,6 @@ const PlaylistList = (props) => {
       ),
       comment: <TextField source="comment" />,
       external: <BooleanField source="externalId" looseValue />,
-      externalSync: <BooleanField source="externalSync" />,
       sync: <ToggleAutoImport source="sync" sortByOrder={'DESC'} />,
     }),
     [isDesktop, isXsmall],
@@ -222,7 +221,7 @@ const PlaylistList = (props) => {
   const columns = useSelectedFields({
     resource: 'playlist',
     columns: toggleableFields,
-    defaultOff: ['comment', 'external', 'externalSync'],
+    defaultOff: ['comment', 'external'],
   })
 
   return (

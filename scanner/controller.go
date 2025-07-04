@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/navidrome/navidrome/core"
 	"github.com/navidrome/navidrome/core/artwork"
 	"github.com/navidrome/navidrome/core/auth"
-	"github.com/navidrome/navidrome/core/external_playlists"
 	"github.com/navidrome/navidrome/core/metrics"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -32,7 +30,6 @@ type Scanner interface {
 	// ScanAll starts a full scan of the music library. This is a blocking operation.
 	ScanAll(ctx context.Context, fullScan bool) (warnings []string, err error)
 	Status(context.Context) (*StatusInfo, error)
-	SyncPlaylists(ctx context.Context) error
 }
 
 type StatusInfo struct {
@@ -46,15 +43,14 @@ type StatusInfo struct {
 }
 
 func New(rootCtx context.Context, ds model.DataStore, cw artwork.CacheWarmer, broker events.Broker,
-	pls core.Playlists, m metrics.Metrics, retriever external_playlists.PlaylistRetriever) Scanner {
+	pls core.Playlists, m metrics.Metrics) Scanner {
 	c := &controller{
-		rootCtx:   rootCtx,
-		ds:        ds,
-		cw:        cw,
-		broker:    broker,
-		pls:       pls,
-		metrics:   m,
-		retriever: retriever,
+		rootCtx: rootCtx,
+		ds:      ds,
+		cw:      cw,
+		broker:  broker,
+		pls:     pls,
+		metrics: m,
 	}
 	if !conf.Server.DevExternalScanner {
 		c.limiter = P(rate.Sometimes{Interval: conf.Server.DevActivityPanelUpdateRate})
@@ -118,7 +114,6 @@ type controller struct {
 	count           atomic.Uint32
 	folderCount     atomic.Uint32
 	changesDetected bool
-	retriever       external_playlists.PlaylistRetriever
 }
 
 // getScanInfo retrieves scan status from the database
@@ -303,54 +298,4 @@ func (s *controller) trackProgress(ctx context.Context, progress <-chan *Progres
 
 func (s *controller) sendMessage(ctx context.Context, status *events.ScanStatus) {
 	s.broker.SendMessage(ctx, status)
-}
-
-// Why is this in the Scanner, when it isn't directly related to scanning files?
-// Because the operation it runs can contend with scanning.
-// To make sure scanning and playlist syncing are mutually exclusive, both
-// exist here under the same lock
-func (s *controller) SyncPlaylists(ctx context.Context) error {
-	release, err := lockScan(ctx)
-	if err != nil {
-		return err
-	}
-	defer release()
-
-	playlists, err := s.ds.Playlist(ctx).GetSyncedPlaylists()
-
-	if err != nil {
-		return err
-	}
-
-	for _, playlist := range playlists {
-		user := model.User{
-			ID: playlist.OwnerID,
-		}
-		nestedCtx := request.WithUser(ctx, user)
-		err = s.retriever.SyncPlaylist(nestedCtx, playlist.ID)
-		if err != nil {
-			log.Error(nestedCtx, "Failed to sync playlist", "id", playlist.ID, err)
-		}
-	}
-
-	props, err := s.ds.UserProps(ctx).GetAllWithPrefix(external_playlists.UserAgentKey)
-
-	if err != nil {
-		return err
-	}
-
-	for _, prop := range props {
-		split := strings.Split(prop.Key, external_playlists.UserAgentKey)
-		user := model.User{
-			ID: prop.UserID,
-		}
-		nestedCtx := request.WithUser(ctx, user)
-		err = s.retriever.SyncRecommended(nestedCtx, prop.UserID, split[1])
-
-		if err != nil {
-			log.Error(ctx, "Failed to fetch recommended playlists", "user", prop.UserID, "agent", split[1])
-		}
-	}
-
-	return err
 }

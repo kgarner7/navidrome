@@ -126,10 +126,9 @@ var _ = Describe("Song Endpoints", func() {
 		mockShareImpl := &mockShare{}
 		mockPlaylistsImpl := &mockPlaylists{}
 		mockInsightsImpl := &mockInsights{}
-		mockRetriever := tests.MockRetriever()
 
 		// Create the native API router and wrap it with the JWTVerifier middleware
-		nativeRouter := New(ds, mockShareImpl, mockRetriever, mockPlaylistsImpl, mockInsightsImpl)
+		nativeRouter := New(ds, mockShareImpl, mockPlaylistsImpl, mockInsightsImpl)
 		router = server.JWTVerifier(nativeRouter)
 		w = httptest.NewRecorder()
 	})

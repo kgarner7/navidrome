@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/core/external_playlists"
 	"github.com/navidrome/navidrome/core/metrics"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -26,13 +25,12 @@ type Router struct {
 	http.Handler
 	ds        model.DataStore
 	share     core.Share
-	pls       external_playlists.PlaylistRetriever
 	playlists core.Playlists
 	insights  metrics.Insights
 }
 
-func New(ds model.DataStore, share core.Share, pls external_playlists.PlaylistRetriever, playlists core.Playlists, insights metrics.Insights) *Router {
-	r := &Router{ds: ds, share: share, pls: pls, playlists: playlists, insights: insights}
+func New(ds model.DataStore, share core.Share, playlists core.Playlists, insights metrics.Insights) *Router {
+	r := &Router{ds: ds, share: share, playlists: playlists, insights: insights}
 
 	r.Handler = r.routes()
 	return r
@@ -76,7 +74,6 @@ func (n *Router) routes() http.Handler {
 		n.addInsightsRoute(r)
 
 		n.addInspectMixRoute(r)
-		n.externalPlaylistRoutes(r)
 		n.stats(r)
 	})
 

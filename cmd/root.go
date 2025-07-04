@@ -81,7 +81,6 @@ func runNavidrome(ctx context.Context) {
 	g.Go(startSignaller(ctx))
 	g.Go(startScheduler(ctx))
 	g.Go(startPlaybackServer(ctx))
-	g.Go(schedulePlaylistSync(ctx, scanner))
 	g.Go(schedulePeriodicBackup(ctx))
 	g.Go(startInsightsCollector(ctx))
 	g.Go(scheduleDBOptimizer(ctx))
@@ -327,28 +326,6 @@ func startPlaybackServer(ctx context.Context) func() error {
 		log.Info(ctx, "Starting Jukebox service")
 		playbackInstance := GetPlaybackServer()
 		return playbackInstance.Run(ctx)
-	}
-}
-
-func schedulePlaylistSync(ctx context.Context, scanner scanner.Scanner) func() error {
-	return func() error {
-		schedule := conf.Server.PlaylistSyncSchedule
-		if schedule == "" {
-			log.Warn("Periodic playlist sync is DISABLED")
-			return nil
-		}
-
-		schedulerInstance := scheduler.GetInstance()
-
-		log.Info("Scheduling periodic playlist sync", "schedule", schedule)
-		_, err := schedulerInstance.Add(schedule, func() {
-			_ = scanner.SyncPlaylists(ctx)
-		})
-		if err != nil {
-			log.Error("Error scheduling periodic playlist sync", err)
-		}
-
-		return nil
 	}
 }
 

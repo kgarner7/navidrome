@@ -8,11 +8,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
-	"github.com/navidrome/navidrome/core/external_playlists"
 	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
 )
 
 type listenBrainzError struct {
@@ -38,60 +35,17 @@ type client struct {
 }
 
 type listenBrainzResponse struct {
-	Code          int               `json:"code"`
-	Message       string            `json:"message"`
-	Error         string            `json:"error"`
-	Status        string            `json:"status"`
-	Valid         bool              `json:"valid"`
-	UserName      string            `json:"user_name"`
-	PlaylistCount int               `json:"playlist_count"`
-	Playlists     []overallPlaylist `json:"playlists,omitempty"`
-	Playlist      lbPlaylist        `json:"playlist"`
+	Code     int    `json:"code"`
+	Message  string `json:"message"`
+	Error    string `json:"error"`
+	Status   string `json:"status"`
+	Valid    bool   `json:"valid"`
+	UserName string `json:"user_name"`
 }
 
 type listenBrainzRequest struct {
 	ApiKey string
-	Body   *listenBrainzRequestBody
-}
-
-type overallPlaylist struct {
-	Playlist lbPlaylist `json:"playlist"`
-}
-
-type lbPlaylist struct {
-	Annotation string       `json:"annotation"`
-	Creator    string       `json:"creator"`
-	Date       time.Time    `json:"date"`
-	Identifier string       `json:"identifier"`
-	Title      string       `json:"title"`
-	Extension  plsExtension `json:"extension"`
-	Tracks     []lbTrack    `json:"track"`
-}
-
-type plsExtension struct {
-	Extension playlistExtension `json:"https://musicbrainz.org/doc/jspf#playlist"`
-}
-
-type playlistExtension struct {
-	AdditionalMetadata additionalMeta `json:"additional_metadata"`
-	Collaborators      []string       `json:"collaborators"`
-	CreatedFor         string         `json:"created_for"`
-	LastModified       time.Time      `json:"last_modified_at"`
-	Public             bool           `json:"public"`
-}
-
-type additionalMeta struct {
-	AlgorithmMetadata algoMeta `json:"algorithm_metadata"`
-}
-
-type algoMeta struct {
-	SourcePatch string `json:"source_patch"`
-}
-
-type lbTrack struct {
-	Creator    string   `json:"creator"`
-	Identifier []string `json:"identifier"`
-	Title      string   `json:"title"`
+	Body   listenBrainzRequestBody
 }
 
 type listenBrainzRequestBody struct {
@@ -134,7 +88,7 @@ func (c *client) validateToken(ctx context.Context, apiKey string) (*listenBrain
 	r := &listenBrainzRequest{
 		ApiKey: apiKey,
 	}
-	response, err := c.makeRequest(ctx, http.MethodGet, "validate-token", "", r)
+	response, err := c.makeRequest(ctx, http.MethodGet, "validate-token", r)
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +98,13 @@ func (c *client) validateToken(ctx context.Context, apiKey string) (*listenBrain
 func (c *client) updateNowPlaying(ctx context.Context, apiKey string, li listenInfo) error {
 	r := &listenBrainzRequest{
 		ApiKey: apiKey,
-		Body: &listenBrainzRequestBody{
+		Body: listenBrainzRequestBody{
 			ListenType: PlayingNow,
 			Payload:    []listenInfo{li},
 		},
 	}
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, "submit-listens", "", r)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "submit-listens", r)
 	if err != nil {
 		return err
 	}
@@ -163,12 +117,12 @@ func (c *client) updateNowPlaying(ctx context.Context, apiKey string, li listenI
 func (c *client) scrobble(ctx context.Context, apiKey string, li listenInfo) error {
 	r := &listenBrainzRequest{
 		ApiKey: apiKey,
-		Body: &listenBrainzRequestBody{
+		Body: listenBrainzRequestBody{
 			ListenType: Single,
 			Payload:    []listenInfo{li},
 		},
 	}
-	resp, err := c.makeRequest(ctx, http.MethodPost, "submit-listens", "", r)
+	resp, err := c.makeRequest(ctx, http.MethodPost, "submit-listens", r)
 	if err != nil {
 		return err
 	}
@@ -176,53 +130,6 @@ func (c *client) scrobble(ctx context.Context, apiKey string, li listenInfo) err
 		log.Warn(ctx, "ListenBrainz: Scrobble was not accepted", "status", resp.Status)
 	}
 	return nil
-}
-
-func (c *client) getPlaylists(ctx context.Context, offset, count int, apiKey, user, plsType string) (*listenBrainzResponse, error) {
-	r := &listenBrainzRequest{
-		ApiKey: apiKey,
-		Body:   nil,
-	}
-
-	var endpoint string
-
-	switch plsType {
-	case "user":
-		endpoint = "user/" + user + "/playlists"
-	case "created":
-		endpoint = "user/" + user + "/playlists/createdfor"
-	case "collab":
-		endpoint = "user/" + user + "/playlists/collaborator"
-	default:
-		return nil, external_playlists.ErrorUnsupportedType
-	}
-
-	extra := fmt.Sprintf("?count=%d&offset=%d", count, offset)
-
-	resp, err := c.makeRequest(ctx, http.MethodGet, endpoint, extra, r)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, err
-}
-
-func (c *client) getPlaylist(ctx context.Context, apiKey, plsId string) (*listenBrainzResponse, error) {
-	r := &listenBrainzRequest{
-		ApiKey: apiKey,
-	}
-
-	endpoint := fmt.Sprintf("playlist/%s", plsId)
-
-	resp, err := c.makeRequest(ctx, http.MethodGet, endpoint, "", r)
-
-	if resp != nil && resp.Code == 404 {
-		return nil, model.ErrNotFound
-	} else if err != nil {
-		return nil, err
-	}
-	return resp, nil
 }
 
 func (c *client) path(endpoint string) (string, error) {
@@ -234,20 +141,13 @@ func (c *client) path(endpoint string) (string, error) {
 	return u.String(), nil
 }
 
-func (c *client) makeRawRequest(ctx context.Context, method string, uri string, query string, r *listenBrainzRequest) (*http.Response, error) {
-	if query != "" {
-		uri += query
+func (c *client) makeRequest(ctx context.Context, method string, endpoint string, r *listenBrainzRequest) (*listenBrainzResponse, error) {
+	b, _ := json.Marshal(r.Body)
+	uri, err := c.path(endpoint)
+	if err != nil {
+		return nil, err
 	}
-
-	var req *http.Request
-
-	if r.Body != nil {
-		b, _ := json.Marshal(r.Body)
-		req, _ = http.NewRequestWithContext(ctx, method, uri, bytes.NewBuffer(b))
-	} else {
-		req, _ = http.NewRequestWithContext(ctx, method, uri, nil)
-	}
-
+	req, _ := http.NewRequestWithContext(ctx, method, uri, bytes.NewBuffer(b))
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
 
 	if r.ApiKey != "" {
@@ -260,23 +160,6 @@ func (c *client) makeRawRequest(ctx context.Context, method string, uri string, 
 		return nil, err
 	}
 
-	return resp, nil
-}
-
-func (c *client) makeLbzRequest(ctx context.Context, method string, endpoint string, query string, r *listenBrainzRequest) (*http.Response, error) {
-	uri, err := c.path(endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.makeRawRequest(ctx, method, uri, query, r)
-}
-
-func (c *client) makeRequest(ctx context.Context, method string, endpoint string, query string, r *listenBrainzRequest) (*listenBrainzResponse, error) {
-	resp, err := c.makeLbzRequest(ctx, method, endpoint, query, r)
-	if err != nil {
-		return nil, err
-	}
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
 

@@ -4,7 +4,6 @@ import (
 	"github.com/google/wire"
 	"github.com/navidrome/navidrome/core/agents"
 	"github.com/navidrome/navidrome/core/external"
-	"github.com/navidrome/navidrome/core/external_playlists"
 	"github.com/navidrome/navidrome/core/ffmpeg"
 	"github.com/navidrome/navidrome/core/metrics"
 	"github.com/navidrome/navidrome/core/playback"
@@ -23,7 +22,6 @@ var Set = wire.NewSet(
 	wire.Bind(new(external.Agents), new(*agents.Agents)),
 	ffmpeg.New,
 	scrobbler.GetPlayTracker,
-	external_playlists.GetPlaylistRetriever,
 	playback.GetInstance,
 	metrics.GetInstance,
 )

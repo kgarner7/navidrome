@@ -1,6 +1,8 @@
 package nativeapi
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -79,6 +81,16 @@ func (n *Router) getStats() http.HandlerFunc {
 		w.Header().Set("X-Total-Count", strconv.FormatInt(count, 10))
 
 		replyJson(ctx, w, data)
+	}
+}
+
+func replyJson(ctx context.Context, w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	resp, _ := json.Marshal(data)
+	_, err := w.Write(resp)
+
+	if err != nil {
+		log.Error(ctx, "Error sending json", "Error", err)
 	}
 }
 

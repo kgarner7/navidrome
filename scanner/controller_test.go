@@ -31,7 +31,7 @@ var _ = Describe("Controller", func() {
 			DeferCleanup(configtest.SetupConfig())
 			ds = &tests.MockDataStore{RealDS: persistence.New(db.Db())}
 			ds.MockedProperty = &tests.MockedPropertyRepo{}
-			ctrl = scanner.New(ctx, ds, artwork.NoopCacheWarmer(), events.NoopBroker(), core.NewPlaylists(ds), metrics.NewNoopInstance(), tests.MockRetriever())
+			ctrl = scanner.New(ctx, ds, artwork.NoopCacheWarmer(), events.NoopBroker(), core.NewPlaylists(ds), metrics.NewNoopInstance())
 			Expect(ds.Library(ctx).Put(&model.Library{ID: 1, Name: "lib", Path: "/tmp"})).To(Succeed())
 		})
 

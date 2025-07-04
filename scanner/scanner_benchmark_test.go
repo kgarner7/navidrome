@@ -21,7 +21,6 @@ import (
 	"github.com/navidrome/navidrome/persistence"
 	"github.com/navidrome/navidrome/scanner"
 	"github.com/navidrome/navidrome/server/events"
-	"github.com/navidrome/navidrome/tests"
 	"go.uber.org/goleak"
 )
 
@@ -41,7 +40,7 @@ func BenchmarkScan(b *testing.B) {
 	ds := persistence.New(db.Db())
 	conf.Server.DevExternalScanner = false
 	s := scanner.New(context.Background(), ds, artwork.NoopCacheWarmer(), events.NoopBroker(),
-		core.NewPlaylists(ds), metrics.NewNoopInstance(), tests.MockRetriever())
+		core.NewPlaylists(ds), metrics.NewNoopInstance())
 
 	fs := storagetest.FakeFS{}
 	storagetest.Register("fake", &fs)

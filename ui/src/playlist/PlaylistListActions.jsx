@@ -1,4 +1,4 @@
-import React, { cloneElement } from 'react'
+import { cloneElement } from 'react'
 import {
   sanitizeListRestProps,
   TopToolbar,
@@ -7,8 +7,6 @@ import {
 } from 'react-admin'
 import { useMediaQuery } from '@material-ui/core'
 import { ToggleFieldsMenu } from '../common'
-import { ImportButton } from './ImportButton'
-import config from '../config'
 
 const PlaylistListActions = ({ className, ...rest }) => {
   const isNotSmall = useMediaQuery((theme) => theme.breakpoints.up('sm'))
@@ -20,8 +18,6 @@ const PlaylistListActions = ({ className, ...rest }) => {
       <CreateButton basePath="/playlist">
         {translate('ra.action.create')}
       </CreateButton>
-      {config.listenBrainzEnabled && <ImportButton />}
-
       {isNotSmall && <ToggleFieldsMenu resource="playlist" />}
     </TopToolbar>
   )
