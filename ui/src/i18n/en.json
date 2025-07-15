@@ -206,9 +206,7 @@
         "makePublic": "Make Public",
         "makePrivate": "Make Private",
         "pressEnterToCreate": "Press Enter to create new playlist",
-        "removeFromSelection": "Remove from selection",
-        "removeSymbol": "×",
-        "viewOriginal": "View original"
+        "removeFromSelection": "Remove from selection"
       },
       "message": {
         "duplicate_song": "Add duplicated songs",
