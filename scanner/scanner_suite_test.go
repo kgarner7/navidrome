@@ -20,7 +20,7 @@ func TestScanner(t *testing.T) {
 
 	tests.Init(t, true)
 	defer db.Close(context.Background())
-	log.SetLevel(log.LevelFatal)
+	log.SetLevel(log.LevelTrace)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Scanner Suite")
 }

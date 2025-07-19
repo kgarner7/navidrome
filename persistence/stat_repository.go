@@ -96,7 +96,7 @@ func (r *statRepository) StatsCount(statType model.StatType, from time.Time, to 
 }
 
 func (r *statRepository) RecordPlay(id string, ts time.Time) error {
-	userId := userId(r.ctx)
+	userId := loggedUser(r.ctx).ID
 	insert := Insert(r.tableName).Columns("file_id", "user_id", "submission_time").Values(id, userId, ts.Unix())
 	_, err := r.executeSQL(insert)
 	return err

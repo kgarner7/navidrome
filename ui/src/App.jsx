@@ -16,9 +16,11 @@ import playlist from './playlist'
 import radio from './radio'
 import share from './share'
 import listen from './listen'
+import library from './library'
 import { Player } from './audioplayer'
 import customRoutes from './routes'
 import {
+  libraryReducer,
   themeReducer,
   addToPlaylistDialogReducer,
   expandInfoDialogReducer,
@@ -57,6 +59,7 @@ const adminStore = createAdminStore({
   dataProvider,
   history,
   customReducers: {
+    library: libraryReducer,
     player: playerReducer,
     albumView: albumViewReducer,
     theme: themeReducer,
@@ -124,7 +127,13 @@ const Admin = (props) => {
         ) : (
           <Resource name="transcoding" />
         ),
-
+        permissions === 'admin' ? (
+          <Resource
+            name="library"
+            {...library}
+            options={{ subMenu: 'settings' }}
+          />
+        ) : null,
         permissions === 'admin' ? (
           <Resource
             name="missing"

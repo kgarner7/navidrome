@@ -58,18 +58,30 @@ var _ = Describe("Scanner", Ordered, func() {
 	})
 
 	BeforeEach(func() {
+		DeferCleanup(configtest.SetupConfig())
+		conf.Server.MusicFolder = "fake:///music" // Set to match test library path
+		conf.Server.DevExternalScanner = false
+
 		db.Init(ctx)
 		DeferCleanup(func() {
 			Expect(tests.ClearDB()).To(Succeed())
 		})
-		DeferCleanup(configtest.SetupConfig())
-		conf.Server.DevExternalScanner = false
 
 		ds = &tests.MockDataStore{RealDS: persistence.New(db.Db())}
 		mfRepo = &mockMediaFileRepo{
 			MediaFileRepository: ds.RealDS.MediaFile(ctx),
 		}
 		ds.MockedMediaFile = mfRepo
+
+		// Create the admin user in the database to match the context
+		adminUser := model.User{
+			ID:          "123",
+			UserName:    "admin",
+			Name:        "Admin User",
+			IsAdmin:     true,
+			NewPassword: "password",
+		}
+		Expect(ds.User(ctx).Put(&adminUser)).To(Succeed())
 
 		s = scanner.New(ctx, ds, artwork.NoopCacheWarmer(), events.NoopBroker(),
 			core.NewPlaylists(ds), metrics.NewNoopInstance())
@@ -146,12 +158,12 @@ var _ = Describe("Scanner", Ordered, func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(mf[0].Tags).ToNot(HaveKey("barcode"))
 
-				fsys.UpdateTags("The Beatles/Help!/01 - Help!.mp3", _t{"barcode": "123"})
+				fsys.UpdateTags("The Beatles/Help!/01 - Help!.mp3", _t{"language": "en"})
 				Expect(runScanner(ctx, true)).To(Succeed())
 
 				mf, err = ds.MediaFile(ctx).GetAll(model.QueryOptions{Filters: squirrel.Eq{"title": "Help!"}})
 				Expect(err).ToNot(HaveOccurred())
-				Expect(mf[0].Tags).To(HaveKeyWithValue(model.TagName("barcode"), []string{"123"}))
+				Expect(mf[0].Tags).To(HaveKeyWithValue(model.TagName("language"), []string{"en"}))
 			})
 
 			It("should update the album", func() {
