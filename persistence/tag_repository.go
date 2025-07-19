@@ -59,7 +59,6 @@ func (r *tagRepository) Add(libraryID int, tags ...model.Tag) error {
 				return fmt.Errorf("adding library_tag entries: %w", err)
 			}
 		}
-
 	}
 	return nil
 }

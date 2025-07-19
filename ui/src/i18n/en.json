@@ -558,8 +558,7 @@
           "none": "Disabled",
           "album": "Use Album Gain",
           "track": "Use Track Gain"
-        },
-        "listenBrainzPlaylistSync": "Sync daily playlists (this requires following troi-bot)"
+        }
       }
     },
     "albumList": "Albums",
