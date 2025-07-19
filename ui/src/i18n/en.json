@@ -214,6 +214,7 @@
         "saveQueue": "Save Queue to Playlist",
         "makePublic": "Make Public",
         "makePrivate": "Make Private",
+        "searchOrCreate": "Search playlists or type to create new...",
         "pressEnterToCreate": "Press Enter to create new playlist",
         "removeFromSelection": "Remove from selection"
       },
