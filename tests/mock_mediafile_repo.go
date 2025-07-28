@@ -253,7 +253,7 @@ func (m *MockMediaFileRepo) NewInstance() interface{} {
 	return &model.MediaFile{}
 }
 
-func (m *MockMediaFileRepo) Search(q string, offset int, size int, includeMissing bool, options ...model.QueryOptions) (model.MediaFiles, error) {
+func (m *MockMediaFileRepo) Search(q string, offset int, size int, options ...model.QueryOptions) (model.MediaFiles, error) {
 	if len(options) > 0 {
 		m.Options = options[0]
 	}
