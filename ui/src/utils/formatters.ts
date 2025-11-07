@@ -95,7 +95,7 @@ export const formatFullDate = (date: string, locale: string) => {
   return new Date(date).toLocaleDateString(locale, options)
 }
 
-export const formatNumber = (value?: number | null) => {
+export const formatNumber = (value?: number | null, locale?: string) => {
   if (value === null || value === undefined) return '0'
-  return value.toLocaleString()
+  return value.toLocaleString(locale)
 }
