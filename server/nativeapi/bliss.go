@@ -15,7 +15,7 @@ import (
 	"github.com/navidrome/navidrome/utils/req"
 )
 
-func (n *Router) instantMix() http.HandlerFunc {
+func (api *Router) instantMix() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		p := req.Params(r)
@@ -33,7 +33,7 @@ func (n *Router) instantMix() http.HandlerFunc {
 
 		count += 1
 
-		mfRepo := n.ds.MediaFile(ctx)
+		mfRepo := api.ds.MediaFile(ctx)
 
 		mf, err := mfRepo.Get(id)
 		if errors.Is(err, model.ErrNotFound) {
@@ -95,8 +95,8 @@ func (n *Router) instantMix() http.HandlerFunc {
 	}
 }
 
-func (n *Router) addInspectMixRoute(r chi.Router) {
+func (api *Router) addInstantMixRoute(r chi.Router) {
 	if conf.Server.Bliss.Enabled {
-		r.Get("/instantMix", n.instantMix())
+		r.Get("/instantMix", api.instantMix())
 	}
 }

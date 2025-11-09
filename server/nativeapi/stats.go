@@ -13,7 +13,7 @@ import (
 	"github.com/navidrome/navidrome/utils/req"
 )
 
-func (n *Router) getStats() http.HandlerFunc {
+func (api *Router) getStats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		p := req.Params(r)
@@ -47,7 +47,7 @@ func (n *Router) getStats() http.HandlerFunc {
 		var err error
 
 		if typeString == "total" {
-			data, err = n.ds.Stat(ctx).Total(from, to)
+			data, err = api.ds.Stat(ctx).Total(from, to)
 
 			if err != nil {
 				log.Error(ctx, "Error getting aggregate stats", err)
@@ -62,7 +62,7 @@ func (n *Router) getStats() http.HandlerFunc {
 				Offset: start,
 			}
 
-			data, err = n.ds.Stat(ctx).Stats(stat, from, to, ops)
+			data, err = api.ds.Stat(ctx).Stats(stat, from, to, ops)
 
 			if err != nil {
 				log.Error(ctx, "Error getting media stats", err)
@@ -70,7 +70,7 @@ func (n *Router) getStats() http.HandlerFunc {
 				return
 			}
 
-			count, err = n.ds.Stat(ctx).StatsCount(stat, from, to)
+			count, err = api.ds.Stat(ctx).StatsCount(stat, from, to)
 			if err != nil {
 				log.Error(ctx, "Error getting media count", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,6 +94,6 @@ func replyJson(ctx context.Context, w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (n *Router) stats(r chi.Router) {
-	r.Get("/stats", n.getStats())
+func (api *Router) stats(r chi.Router) {
+	r.Get("/stats", api.getStats())
 }
