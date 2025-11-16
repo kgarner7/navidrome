@@ -29,6 +29,10 @@ type MockDataStore struct {
 	MockedStat           model.StatRepository
 	scrobbleBufferMu     sync.Mutex
 	repoMu               sync.Mutex
+
+	// GC tracking
+	GCCalled bool
+	GCError  error
 }
 
 func (db *MockDataStore) Library(ctx context.Context) model.LibraryRepository {
@@ -274,6 +278,10 @@ func (db *MockDataStore) Listen(context.Context) model.ListenRepository {
 	return struct{ model.ListenRepository }{}
 }
 
-func (db *MockDataStore) GC(context.Context) error {
+func (db *MockDataStore) GC(context.Context, ...int) error {
+	db.GCCalled = true
+	if db.GCError != nil {
+		return db.GCError
+	}
 	return nil
 }

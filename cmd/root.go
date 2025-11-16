@@ -138,7 +138,7 @@ func startServer(ctx context.Context) func() error {
 }
 
 // schedulePeriodicScan schedules a periodic scan of the music library, if configured.
-func schedulePeriodicScan(ctx context.Context, scanner scanner.Scanner) func() error {
+func schedulePeriodicScan(ctx context.Context, scanner model.Scanner) func() error {
 	return func() error {
 		schedule := conf.Server.Scanner.Schedule
 		if schedule == "" {

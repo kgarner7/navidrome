@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"github.com/navidrome/navidrome/server/subsonic/responses"
@@ -172,8 +171,6 @@ func (api *Router) SavePlayQueueByIndex(r *http.Request) (*responses.Subsonic, e
 	ids, _ := p.Strings("id")
 
 	position := p.Int64Or("position", 0)
-
-	log.Error(r.Context(), "saveByIndex", "params", ids, "position", position)
 
 	var err error
 	var currentIndex int
