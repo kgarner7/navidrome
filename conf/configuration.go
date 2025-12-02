@@ -41,6 +41,7 @@ type configOptions struct {
 	UIWelcomeMessage                string
 	MaxSidebarPlaylists             int
 	EnableTranscodingConfig         bool
+	EnableTranscodingCancellation   bool
 	EnableDownloads                 bool
 	EnableExternalServices          bool
 	EnableInsightsCollector         bool
@@ -504,6 +505,7 @@ func setViperDefaults() {
 	viper.SetDefault("uiwelcomemessage", "")
 	viper.SetDefault("maxsidebarplaylists", consts.DefaultMaxSidebarPlaylists)
 	viper.SetDefault("enabletranscodingconfig", false)
+	viper.SetDefault("enabletranscodingcancellation", false)
 	viper.SetDefault("transcodingcachesize", "100MB")
 	viper.SetDefault("imagecachesize", "100MB")
 	viper.SetDefault("albumplaycountmode", consts.AlbumPlayCountModeAbsolute)
@@ -638,7 +640,7 @@ func init() {
 	setViperDefaults()
 }
 
-func InitConfig(cfgFile string) {
+func InitConfig(cfgFile string, loadEnvVars bool) {
 	codecRegistry := viper.NewCodecRegistry()
 	_ = codecRegistry.RegisterCodec("ini", ini.Codec{
 		LoadOptions: ini.LoadOptions{
@@ -659,10 +661,12 @@ func InitConfig(cfgFile string) {
 	}
 
 	_ = viper.BindEnv("port")
-	viper.SetEnvPrefix("ND")
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
-	viper.AutomaticEnv()
+	if loadEnvVars {
+		viper.SetEnvPrefix("ND")
+		replacer := strings.NewReplacer(".", "_")
+		viper.SetEnvKeyReplacer(replacer)
+		viper.AutomaticEnv()
+	}
 
 	err := viper.ReadInConfig()
 	if viper.ConfigFileUsed() != "" && err != nil {
