@@ -97,7 +97,7 @@ const ListenList = (props: ListProps) => {
         <Datagrid rowClick={handleRowClick} classes={{ row: classes.row }}>
           <FunctionField
             source="submission_time"
-            render={(r) => r && fromUnixTime(r.submissionTime).toLocaleString()}
+            render={(r) => r && r.submissionTime}
           />
           <TextField source="title" />
 
