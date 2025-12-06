@@ -21,6 +21,7 @@ import {
 } from 'react-admin'
 import Switch from '@material-ui/core/Switch'
 import { styled, Typography, useMediaQuery } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
 import {
   DurationField,
   List,
@@ -100,6 +101,12 @@ const Empty = () => {
     </Root>
   )
 }
+
+const useStyles = makeStyles((theme) => ({
+  button: {
+    color: theme.palette.type === 'dark' ? 'white' : undefined,
+  },
+}))
 
 const PlaylistFilter = (props) => {
   const { permissions } = usePermissions()
@@ -185,13 +192,24 @@ const ToggleAutoImport = ({ resource, source }) => {
   ) : null
 }
 
-const PlaylistListBulkActions = (props) => (
-  <>
-    <ChangePublicStatusButton public={true} {...props} />
-    <ChangePublicStatusButton public={false} {...props} />
-    <BulkDeleteButton {...props} />
-  </>
-)
+const PlaylistListBulkActions = (props) => {
+  const classes = useStyles()
+  return (
+    <>
+      <ChangePublicStatusButton
+        public={true}
+        {...props}
+        className={classes.button}
+      />
+      <ChangePublicStatusButton
+        public={false}
+        {...props}
+        className={classes.button}
+      />
+      <BulkDeleteButton {...props} className={classes.button} />
+    </>
+  )
+}
 
 const PlaylistList = (props) => {
   const isXsmall = useMediaQuery((theme) => theme.breakpoints.down('xs'))

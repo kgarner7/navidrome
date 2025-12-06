@@ -25,6 +25,7 @@ type MockDataStore struct {
 	MockedTranscoding    model.TranscodingRepository
 	MockedUserProps      model.UserPropsRepository
 	MockedScrobbleBuffer model.ScrobbleBufferRepository
+	MockedScrobble       model.ScrobbleRepository
 	MockedRadio          model.RadioRepository
 	MockedStat           model.StatRepository
 	scrobbleBufferMu     sync.Mutex
@@ -209,10 +210,21 @@ func (db *MockDataStore) ScrobbleBuffer(ctx context.Context) model.ScrobbleBuffe
 		if db.RealDS != nil {
 			db.MockedScrobbleBuffer = db.RealDS.ScrobbleBuffer(ctx)
 		} else {
-			db.MockedScrobbleBuffer = CreateMockedScrobbleBufferRepo()
+			db.MockedScrobbleBuffer = &MockedScrobbleBufferRepo{}
 		}
 	}
 	return db.MockedScrobbleBuffer
+}
+
+func (db *MockDataStore) Scrobble(ctx context.Context) model.ScrobbleRepository {
+	if db.MockedScrobble == nil {
+		if db.RealDS != nil {
+			db.MockedScrobble = db.RealDS.Scrobble(ctx)
+		} else {
+			db.MockedScrobble = &MockScrobbleRepo{ctx: ctx}
+		}
+	}
+	return db.MockedScrobble
 }
 
 func (db *MockDataStore) Radio(ctx context.Context) model.RadioRepository {
@@ -272,10 +284,6 @@ func (db *MockDataStore) Resource(ctx context.Context, m any) model.ResourceRepo
 	default:
 		return struct{ model.ResourceRepository }{}
 	}
-}
-
-func (db *MockDataStore) Listen(context.Context) model.ListenRepository {
-	return struct{ model.ListenRepository }{}
 }
 
 func (db *MockDataStore) GC(context.Context, ...int) error {

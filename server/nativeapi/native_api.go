@@ -56,7 +56,7 @@ func (api *Router) routes() http.Handler {
 		api.R(r, "/transcoding", model.Transcoding{}, conf.Server.EnableTranscodingConfig)
 		api.R(r, "/radio", model.Radio{}, true)
 		api.R(r, "/tag", model.Tag{}, true)
-		api.R(r, "/listen", model.Listen{}, false)
+		api.R(r, "/listen", model.Scrobble{}, false)
 		if conf.Server.EnableSharing {
 			api.RX(r, "/share", api.share.NewRepository, true)
 		}

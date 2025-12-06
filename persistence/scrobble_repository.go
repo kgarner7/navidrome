@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"time"
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
@@ -12,34 +13,34 @@ import (
 	"github.com/pocketbase/dbx"
 )
 
-type listenRepository struct {
+type scrobbleRepository struct {
 	sqlRepository
 }
 
-type dbListen struct {
+type dbScrobble struct {
 	dbMediaFile
 	RowId          int64 `structs:"row_id" json:"rowId"`
 	SubmissionTime int64 `structs:"submission_time" json:"submissionTime"`
 }
 
-type dbListens []dbListen
+type dbScrobbles []dbScrobble
 
-func (m dbListens) toModels() model.Listens {
-	return slice.Map(m, func(db dbListen) model.Listen {
-		return model.Listen{
+func (m dbScrobbles) toModels() model.Scrobbles {
+	return slice.Map(m, func(db dbScrobble) model.Scrobble {
+		return model.Scrobble{
 			MediaFile:      *db.MediaFile,
 			RowId:          db.RowId,
-			SubmissionTime: db.SubmissionTime,
+			SubmissionTime: time.Unix(db.SubmissionTime, 0),
 		}
 	})
 }
 
-func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository {
-	r := &listenRepository{}
+func NewScrobbleRepository(ctx context.Context, db dbx.Builder) model.ScrobbleRepository {
+	r := &scrobbleRepository{}
 	r.ctx = ctx
 	r.db = db
 	r.tableName = "scrobbles"
-	r.registerModel(&model.Listen{}, map[string]filterFunc{
+	r.registerModel(&model.Scrobble{}, map[string]filterFunc{
 		"title": fullTextFilter("f"),
 	})
 	r.setSortMappings(map[string]string{
@@ -53,7 +54,19 @@ func NewListenRepository(ctx context.Context, db dbx.Builder) *listenRepository 
 	return r
 }
 
-func (r *listenRepository) Count(options ...rest.QueryOptions) (int64, error) {
+func (r *scrobbleRepository) RecordScrobble(mediaFileID string, submissionTime time.Time) error {
+	userID := loggedUser(r.ctx).ID
+	values := map[string]interface{}{
+		"file_id":         mediaFileID,
+		"user_id":         userID,
+		"submission_time": submissionTime.Unix(),
+	}
+	insert := Insert(r.tableName).SetMap(values)
+	_, err := r.executeSQL(insert)
+	return err
+}
+
+func (r *scrobbleRepository) Count(options ...rest.QueryOptions) (int64, error) {
 	user := loggedUser(r.ctx)
 
 	sel := r.newSelect().
@@ -67,11 +80,11 @@ func (r *listenRepository) Count(options ...rest.QueryOptions) (int64, error) {
 	return res.Count, err
 }
 
-func (r *listenRepository) Read(id string) (interface{}, error) {
+func (r *scrobbleRepository) Read(id string) (interface{}, error) {
 	return nil, model.ErrNotFound
 }
 
-func (r *listenRepository) ReadAll(options ...rest.QueryOptions) (interface{}, error) {
+func (r *scrobbleRepository) ReadAll(options ...rest.QueryOptions) (interface{}, error) {
 	user := loggedUser(r.ctx)
 
 	sel := r.newSelect(r.parseRestOptions(r.ctx, options...)).
@@ -95,21 +108,21 @@ func (r *listenRepository) ReadAll(options ...rest.QueryOptions) (interface{}, e
 		sel = sel.Columns("coalesce(play_count, 0) as play_count")
 	}
 
-	var listens dbListens
-	err := r.queryAll(sel, &listens)
+	var scrobbles dbScrobbles
+	err := r.queryAll(sel, &scrobbles)
 	if err != nil {
 		return nil, err
 	}
-	return listens.toModels(), err
+	return scrobbles.toModels(), err
 }
 
-func (r *listenRepository) EntityName() string {
-	return "listen"
+func (r *scrobbleRepository) EntityName() string {
+	return "scrobble"
 }
 
-func (r *listenRepository) NewInstance() interface{} {
-	return &model.Listen{}
+func (r *scrobbleRepository) NewInstance() interface{} {
+	return &model.Scrobble{}
 }
 
-var _ model.ListenRepository = (*statRepository)(nil)
-var _ model.ResourceRepository = (*listenRepository)(nil)
+var _ model.ScrobbleRepository = (*scrobbleRepository)(nil)
+var _ model.ResourceRepository = (*scrobbleRepository)(nil)

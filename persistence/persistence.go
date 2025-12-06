@@ -93,8 +93,8 @@ func (s *SQLStore) Stat(ctx context.Context) model.StatRepository {
 	return NewStatRepository(ctx, s.getDBXBuilder())
 }
 
-func (s *SQLStore) Listen(ctx context.Context) model.ListenRepository {
-	return NewListenRepository(ctx, s.getDBXBuilder())
+func (s *SQLStore) Scrobble(ctx context.Context) model.ScrobbleRepository {
+	return NewScrobbleRepository(ctx, s.getDBXBuilder())
 }
 
 func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRepository {
@@ -119,8 +119,8 @@ func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRe
 		return s.Radio(ctx).(model.ResourceRepository)
 	case model.Share:
 		return s.Share(ctx).(model.ResourceRepository)
-	case model.Listen:
-		return s.Listen(ctx).(model.ResourceRepository)
+	case model.Scrobble:
+		return s.Scrobble(ctx).(model.ResourceRepository)
 	case model.Tag:
 		return s.Tag(ctx).(model.ResourceRepository)
 	}
