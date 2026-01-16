@@ -35,7 +35,7 @@ var _ = Describe("ScrobbleRepository", func() {
 	})
 
 	AfterEach(func() {
-		_, _ = rawRepo.db.Delete("scrobbles", dbx.HashExp{"media_file_id": fileID}).Execute()
+		_, _ = rawRepo.db.Delete("scrobbles", dbx.HashExp{"file_id": fileID}).Execute()
 		_, _ = rawRepo.db.Delete("media_file", dbx.HashExp{"id": fileID}).Execute()
 		_, _ = rawRepo.db.Delete("user", dbx.HashExp{"id": userID}).Execute()
 	})
@@ -68,12 +68,12 @@ var _ = Describe("ScrobbleRepository", func() {
 
 			// Verify insertion
 			var scrobble struct {
-				MediaFileID    string `db:"media_file_id"`
+				MediaFileID    string `db:"file_id"`
 				UserID         string `db:"user_id"`
 				SubmissionTime int64  `db:"submission_time"`
 			}
 			err = rawRepo.db.Select("*").From("scrobbles").
-				Where(dbx.HashExp{"media_file_id": fileID, "user_id": userID}).
+				Where(dbx.HashExp{"file_id": fileID, "user_id": userID}).
 				One(&scrobble)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(scrobble.MediaFileID).To(Equal(fileID))
