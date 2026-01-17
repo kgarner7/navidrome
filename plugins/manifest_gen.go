@@ -277,7 +277,7 @@ type KVStorePermission struct {
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
 }
 
-type Label struct {
+type TextLabel struct {
 	// Options corresponds to the JSON schema field "options".
 	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
 
@@ -294,12 +294,12 @@ type Label struct {
 type LabelRule interface{}
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *Label) UnmarshalJSON(value []byte) error {
+func (j *TextLabel) UnmarshalJSON(value []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(value, &raw); err != nil {
 		return err
 	}
-	type Plain Label
+	type Plain TextLabel
 	var plain Plain
 	if err := json.Unmarshal(value, &plain); err != nil {
 		return err
@@ -307,7 +307,7 @@ func (j *Label) UnmarshalJSON(value []byte) error {
 	if v, ok := raw["type"]; !ok || v == nil {
 		plain.Type = "Label"
 	}
-	*j = Label(plain)
+	*j = TextLabel(plain)
 	return nil
 }
 
@@ -658,7 +658,7 @@ type UISchemaMetaSchema_3 = Verticallayout
 type UISchemaMetaSchema_4 = Categorization
 type UISchemaMetaSchema_5 = Group
 type UISchemaMetaSchema_2 = Horizontallayout
-type UISchemaMetaSchema_1 = Label
+type UISchemaMetaSchema_1 = TextLabel
 type UISchemaMetaSchema_0 = Control
 type VerticallayoutRule interface{}
 
