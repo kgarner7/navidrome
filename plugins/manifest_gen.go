@@ -2,8 +2,15 @@
 
 package plugins
 
-import "encoding/json"
-import "fmt"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"reflect"
+	"regexp"
+)
+
+type AndCondition interface{}
 
 // Artwork service permissions for generating artwork URLs
 type ArtworkPermission struct {
@@ -17,16 +24,195 @@ type CachePermission struct {
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
 }
 
+type Categorization struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements []Category `json:"elements" yaml:"elements" mapstructure:"elements"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Categorization) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["elements"]; raw != nil && !ok {
+		return fmt.Errorf("field elements in Categorization: required")
+	}
+	type Plain Categorization
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "Categorization"
+	}
+	*j = Categorization(plain)
+	return nil
+}
+
+type Category struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements Elements `json:"elements,omitempty" yaml:"elements,omitempty" mapstructure:"elements,omitempty"`
+
+	// Label corresponds to the JSON schema field "label".
+	Label *string `json:"label,omitempty" yaml:"label,omitempty" mapstructure:"label,omitempty"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule CategoryRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
+}
+
+type CategoryRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Category) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	type Plain Category
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "Category"
+	}
+	*j = Category(plain)
+	return nil
+}
+
+type ComposableCondition interface{}
+
+type Condition struct {
+	// Type corresponds to the JSON schema field "type".
+	Type *string `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Condition) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["type"]; raw != nil && ok {
+		return fmt.Errorf("field type in Condition: read only")
+	}
+	type Plain Condition
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Condition(plain)
+	return nil
+}
+
 // Configuration access permissions for a plugin
 type ConfigPermission struct {
 	// Explanation for why config access is needed
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
 }
 
+type Control struct {
+	// Label corresponds to the JSON schema field "label".
+	Label *string `json:"label,omitempty" yaml:"label,omitempty" mapstructure:"label,omitempty"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule ControlRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Scope corresponds to the JSON schema field "scope".
+	Scope Scope `json:"scope" yaml:"scope" mapstructure:"scope"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+type ControlRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Control) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["scope"]; raw != nil && !ok {
+		return fmt.Errorf("field scope in Control: required")
+	}
+	type Plain Control
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "Control"
+	}
+	*j = Control(plain)
+	return nil
+}
+
+type Elements []interface{}
+
 // Experimental features that may change or be removed in future versions
 type Experimental struct {
 	// Threads corresponds to the JSON schema field "threads".
 	Threads *ThreadsFeature `json:"threads,omitempty" yaml:"threads,omitempty" mapstructure:"threads,omitempty"`
+}
+
+type Group struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements Elements `json:"elements" yaml:"elements" mapstructure:"elements"`
+
+	// Label corresponds to the JSON schema field "label".
+	Label string `json:"label" yaml:"label" mapstructure:"label"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule GroupRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+type GroupRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Group) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["elements"]; raw != nil && !ok {
+		return fmt.Errorf("field elements in Group: required")
+	}
+	if _, ok := raw["label"]; raw != nil && !ok {
+		return fmt.Errorf("field label in Group: required")
+	}
+	type Plain Group
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "Group"
+	}
+	*j = Group(plain)
+	return nil
 }
 
 // HTTP access permissions for a plugin
@@ -39,6 +225,49 @@ type HTTPPermission struct {
 	RequiredHosts []string `json:"requiredHosts,omitempty" yaml:"requiredHosts,omitempty" mapstructure:"requiredHosts,omitempty"`
 }
 
+type Horizontallayout struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements Elements `json:"elements" yaml:"elements" mapstructure:"elements"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule HorizontallayoutRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+type HorizontallayoutRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Horizontallayout) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["elements"]; raw != nil && !ok {
+		return fmt.Errorf("field elements in Horizontallayout: required")
+	}
+	type Plain Horizontallayout
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "HorizontalLayout"
+	}
+	*j = Horizontallayout(plain)
+	return nil
+}
+
+// Display and configure plugin using JSON Schema
+type JsonSchemaPermissions struct {
+	// Explanation for JSON-based configuration is required
+	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
+}
+
 // Key-value store permissions for persistent plugin storage
 type KVStorePermission struct {
 	// Maximum storage size (e.g., '1MB', '500KB'). Default: 1MB
@@ -47,6 +276,42 @@ type KVStorePermission struct {
 	// Explanation for why key-value store access is needed
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
 }
+
+type Label struct {
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule LabelRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Text corresponds to the JSON schema field "text".
+	Text *string `json:"text,omitempty" yaml:"text,omitempty" mapstructure:"text,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type,omitempty" yaml:"type,omitempty" mapstructure:"type,omitempty"`
+}
+
+type LabelRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Label) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	type Plain Label
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "Label"
+	}
+	*j = Label(plain)
+	return nil
+}
+
+type LeafCondition interface{}
 
 // Library service permissions for accessing library metadata and optionally
 // filesystem
@@ -93,6 +358,9 @@ type Manifest struct {
 	// Permissions corresponds to the JSON schema field "permissions".
 	Permissions *Permissions `json:"permissions,omitempty" yaml:"permissions,omitempty" mapstructure:"permissions,omitempty"`
 
+	// Schema corresponds to the JSON schema field "schema".
+	Schema *PluginSchema `json:"schema,omitempty" yaml:"schema,omitempty" mapstructure:"schema,omitempty"`
+
 	// The version of the plugin (semver recommended)
 	Version string `json:"version" yaml:"version" mapstructure:"version"`
 
@@ -133,6 +401,8 @@ func (j *Manifest) UnmarshalJSON(value []byte) error {
 	return nil
 }
 
+type OrCondition interface{}
+
 // Permissions required by the plugin
 type Permissions struct {
 	// Artwork corresponds to the JSON schema field "artwork".
@@ -143,6 +413,9 @@ type Permissions struct {
 
 	// Http corresponds to the JSON schema field "http".
 	Http *HTTPPermission `json:"http,omitempty" yaml:"http,omitempty" mapstructure:"http,omitempty"`
+
+	// JsonSchema corresponds to the JSON schema field "jsonSchema".
+	JsonSchema *JsonSchemaPermissions `json:"jsonSchema,omitempty" yaml:"jsonSchema,omitempty" mapstructure:"jsonSchema,omitempty"`
 
 	// Kvstore corresponds to the JSON schema field "kvstore".
 	Kvstore *KVStorePermission `json:"kvstore,omitempty" yaml:"kvstore,omitempty" mapstructure:"kvstore,omitempty"`
@@ -163,10 +436,124 @@ type Permissions struct {
 	Websocket *WebSocketPermission `json:"websocket,omitempty" yaml:"websocket,omitempty" mapstructure:"websocket,omitempty"`
 }
 
+// JSON schema and UI schema for plugin configuration
+type PluginSchema struct {
+	// Schema corresponds to the JSON schema field "schema".
+	Schema map[string]interface{} `json:"schema,omitempty" yaml:"schema,omitempty" mapstructure:"schema,omitempty"`
+
+	// Ui corresponds to the JSON schema field "ui".
+	Ui *UISchemaMetaSchema `json:"ui,omitempty" yaml:"ui,omitempty" mapstructure:"ui,omitempty"`
+}
+
+type RuleUISchemaMetaSchema struct {
+	// The condition of the rule that must evaluate to true in order to trigger the
+	// effect.
+	Condition interface{} `json:"condition" yaml:"condition" mapstructure:"condition"`
+
+	// The effect of the rule
+	Effect RuleUISchemaMetaSchemaEffect `json:"effect" yaml:"effect" mapstructure:"effect"`
+}
+
+type RuleUISchemaMetaSchemaEffect string
+
+const RuleUISchemaMetaSchemaEffectDISABLE RuleUISchemaMetaSchemaEffect = "DISABLE"
+const RuleUISchemaMetaSchemaEffectENABLE RuleUISchemaMetaSchemaEffect = "ENABLE"
+const RuleUISchemaMetaSchemaEffectHIDE RuleUISchemaMetaSchemaEffect = "HIDE"
+const RuleUISchemaMetaSchemaEffectSHOW RuleUISchemaMetaSchemaEffect = "SHOW"
+
+var enumValues_RuleUISchemaMetaSchemaEffect = []interface{}{
+	"HIDE",
+	"SHOW",
+	"ENABLE",
+	"DISABLE",
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *RuleUISchemaMetaSchemaEffect) UnmarshalJSON(value []byte) error {
+	var v string
+	if err := json.Unmarshal(value, &v); err != nil {
+		return err
+	}
+	var ok bool
+	for _, expected := range enumValues_RuleUISchemaMetaSchemaEffect {
+		if reflect.DeepEqual(v, expected) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_RuleUISchemaMetaSchemaEffect, v)
+	}
+	*j = RuleUISchemaMetaSchemaEffect(v)
+	return nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *RuleUISchemaMetaSchema) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["condition"]; raw != nil && !ok {
+		return fmt.Errorf("field condition in RuleUISchemaMetaSchema: required")
+	}
+	if _, ok := raw["effect"]; raw != nil && !ok {
+		return fmt.Errorf("field effect in RuleUISchemaMetaSchema: required")
+	}
+	type Plain RuleUISchemaMetaSchema
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = RuleUISchemaMetaSchema(plain)
+	return nil
+}
+
 // Scheduler service permissions for scheduling tasks
 type SchedulerPermission struct {
 	// Explanation for why scheduler access is needed
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
+}
+
+type SchemaBasedCondition interface{}
+
+type Scopable struct {
+	// Scope corresponds to the JSON schema field "scope".
+	Scope string `json:"scope" yaml:"scope" mapstructure:"scope"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Scopable) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["scope"]; raw != nil && !ok {
+		return fmt.Errorf("field scope in Scopable: required")
+	}
+	type Plain Scopable
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = Scopable(plain)
+	return nil
+}
+
+type Scope string
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Scope) UnmarshalJSON(value []byte) error {
+	type Plain Scope
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if matched, _ := regexp.MatchString(`^#$|^#\/$|^#\/properties\/{1}`, string(plain)); !matched {
+		return fmt.Errorf("field %s pattern match: must match %s", "", `^#$|^#\/$|^#\/properties\/{1}`)
+	}
+	*j = Scope(plain)
+	return nil
 }
 
 // SubsonicAPI service permissions. Requires 'users' permission to be declared.
@@ -181,10 +568,119 @@ type ThreadsFeature struct {
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
 }
 
+type UISchemaMetaSchema struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements Elements `json:"elements" yaml:"elements" mapstructure:"elements"`
+
+	// Label corresponds to the JSON schema field "label".
+	Label string `json:"label" yaml:"label" mapstructure:"label"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule ControlRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Scope corresponds to the JSON schema field "scope".
+	Scope Scope `json:"scope" yaml:"scope" mapstructure:"scope"`
+
+	// Text corresponds to the JSON schema field "text".
+	Text *string `json:"text,omitempty" yaml:"text,omitempty" mapstructure:"text,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *UISchemaMetaSchema) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	var uISchemaMetaSchema_0 UISchemaMetaSchema_0
+	var uISchemaMetaSchema_1 UISchemaMetaSchema_1
+	var uISchemaMetaSchema_2 UISchemaMetaSchema_2
+	var uISchemaMetaSchema_3 UISchemaMetaSchema_3
+	var uISchemaMetaSchema_4 UISchemaMetaSchema_4
+	var uISchemaMetaSchema_5 UISchemaMetaSchema_5
+	var errs []error
+	if err := uISchemaMetaSchema_0.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if err := uISchemaMetaSchema_1.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if err := uISchemaMetaSchema_2.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if err := uISchemaMetaSchema_3.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if err := uISchemaMetaSchema_4.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if err := uISchemaMetaSchema_5.UnmarshalJSON(value); err != nil {
+		errs = append(errs, err)
+	}
+	if len(errs) == 6 {
+		return fmt.Errorf("all validators failed: %s", errors.Join(errs...))
+	}
+	type Plain UISchemaMetaSchema
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	*j = UISchemaMetaSchema(plain)
+	return nil
+}
+
 // Users service permissions for accessing user information
 type UsersPermission struct {
 	// Explanation for why users access is needed
 	Reason *string `json:"reason,omitempty" yaml:"reason,omitempty" mapstructure:"reason,omitempty"`
+}
+
+type Verticallayout struct {
+	// Elements corresponds to the JSON schema field "elements".
+	Elements Elements `json:"elements" yaml:"elements" mapstructure:"elements"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options map[string]interface{} `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Rule corresponds to the JSON schema field "rule".
+	Rule VerticallayoutRule `json:"rule,omitempty" yaml:"rule,omitempty" mapstructure:"rule,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type string `json:"type" yaml:"type" mapstructure:"type"`
+}
+
+type UISchemaMetaSchema_3 = Verticallayout
+type UISchemaMetaSchema_4 = Categorization
+type UISchemaMetaSchema_5 = Group
+type UISchemaMetaSchema_2 = Horizontallayout
+type UISchemaMetaSchema_1 = Label
+type UISchemaMetaSchema_0 = Control
+type VerticallayoutRule interface{}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *Verticallayout) UnmarshalJSON(value []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(value, &raw); err != nil {
+		return err
+	}
+	if _, ok := raw["elements"]; raw != nil && !ok {
+		return fmt.Errorf("field elements in Verticallayout: required")
+	}
+	type Plain Verticallayout
+	var plain Plain
+	if err := json.Unmarshal(value, &plain); err != nil {
+		return err
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		plain.Type = "VerticalLayout"
+	}
+	*j = Verticallayout(plain)
+	return nil
 }
 
 // WebSocket service permissions for establishing WebSocket connections

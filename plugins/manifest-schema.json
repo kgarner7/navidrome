@@ -36,6 +36,9 @@
     },
     "experimental": {
       "$ref": "#/$defs/Experimental"
+    },
+    "schema": {
+      "$ref": "#/$defs/PluginSchema"
     }
   },
   "$defs": {
@@ -91,6 +94,9 @@
         },
         "users": {
           "$ref": "#/$defs/UsersPermission"
+        },
+        "jsonSchema": {
+          "$ref": "#/$defs/JsonSchemaPermissions"
         }
       }
     },
@@ -224,6 +230,31 @@
         "reason": {
           "type": "string",
           "description": "Explanation for why users access is needed"
+        }
+      }
+    },
+    "JsonSchemaPermissions": {
+      "type": "object",
+      "description": "Display and configure plugin using JSON Schema",
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Explanation for JSON-based configuration is required"
+        }
+      }
+    },
+    "PluginSchema": {
+      "type": "object",
+      "description": "JSON schema and UI schema for plugin configuration",
+      "additionalProperties": false,
+      "required": [""],
+      "properties": {
+        "schema": {
+          "type": "object"
+        },
+        "ui": {
+          "$ref": "ui-schema.json"
         }
       }
     }

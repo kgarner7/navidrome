@@ -9,8 +9,9 @@ import {
   useRefresh,
   Title as RaTitle,
   Loading,
+  createMuiTheme,
 } from 'react-admin'
-import { Box, useMediaQuery, Button } from '@material-ui/core'
+import { Box, useMediaQuery, Button, Card, ThemeProvider, TextField } from '@material-ui/core'
 import { MdSave } from 'react-icons/md'
 import Alert from '@material-ui/lab/Alert'
 import { Title, useResourceRefresh } from '../common'
@@ -22,6 +23,22 @@ import { ManifestSection } from './ManifestSection'
 import { ConfigCard } from './ConfigCard'
 import { UsersPermissionCard } from './UsersPermissionCard'
 import { LibraryPermissionCard } from './LibraryPermissionCard'
+import { JsonForms } from '@jsonforms/react'
+import {
+  materialRenderers,
+  materialCells,
+  materialBooleanCellTester,
+  materialDateCellTester,
+  materialEnumCellTester,
+  materialIntegerCellTester,
+  materialNumberCellTester,
+  materialOneOfEnumCellTester,
+  materialTextCellTester,
+  materialTimeCellTester,
+} from '@jsonforms/material-renderers';
+import useCurrentTheme from '../themes/useCurrentTheme.js'
+
+const TextCell = (props) => (<TextField {...props} fullWidth size="small" variant='outlined' multiline minRows={1} />)
 
 // Main show layout component
 const PluginShowLayout = () => {
@@ -106,6 +123,8 @@ const PluginShowLayout = () => {
       }
     }
   }, [record, lastRecordUsers, lastRecordAllUsers, isDirty])
+
+  const [data, setData] = useState({})
 
   // Initialize/update libraries permission state when record loads or changes
   React.useEffect(() => {
@@ -223,11 +242,13 @@ const PluginShowLayout = () => {
     }
   }, [record?.manifest])
 
+  const theme = useCurrentTheme()
+
+
   // Handle loading state
   if (isPending) {
     return <Loading />
   }
-
   // Handle error state
   if (error) {
     return (
@@ -309,6 +330,19 @@ const PluginShowLayout = () => {
             {translate('ra.action.save')}
           </Button>
         </Box>
+        <Card className={classes.section}>
+          {/* <ThemeProvider theme={createMuiTheme(theme)}> */}
+          <JsonForms
+            schema={manifest.schema.schema}
+            uischema={manifest.schema.ui}
+            data={data}
+            renderers={materialRenderers}
+            cells={materialCells}
+            onChange={({ data, errors }) => setData(data)}
+          />
+          {/* </ThemeProvider> */}
+
+        </Card>
       </Box>
     </>
   )
