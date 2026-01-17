@@ -11,7 +11,14 @@ import {
   Loading,
   createMuiTheme,
 } from 'react-admin'
-import { Box, useMediaQuery, Button, Card, ThemeProvider, TextField } from '@material-ui/core'
+import {
+  Box,
+  useMediaQuery,
+  Button,
+  Card,
+  ThemeProvider,
+  TextField,
+} from '@material-ui/core'
 import { MdSave } from 'react-icons/md'
 import Alert from '@material-ui/lab/Alert'
 import { Title, useResourceRefresh } from '../common'
@@ -35,10 +42,19 @@ import {
   materialOneOfEnumCellTester,
   materialTextCellTester,
   materialTimeCellTester,
-} from '@jsonforms/material-renderers';
+} from '@jsonforms/material-renderers'
 import useCurrentTheme from '../themes/useCurrentTheme.js'
 
-const TextCell = (props) => (<TextField {...props} fullWidth size="small" variant='outlined' multiline minRows={1} />)
+const TextCell = (props) => (
+  <TextField
+    {...props}
+    fullWidth
+    size="small"
+    variant="outlined"
+    multiline
+    minRows={1}
+  />
+)
 
 // Main show layout component
 const PluginShowLayout = () => {
@@ -244,7 +260,6 @@ const PluginShowLayout = () => {
 
   const theme = useCurrentTheme()
 
-
   // Handle loading state
   if (isPending) {
     return <Loading />
@@ -341,7 +356,6 @@ const PluginShowLayout = () => {
             onChange={({ data, errors }) => setData(data)}
           />
           {/* </ThemeProvider> */}
-
         </Card>
       </Box>
     </>
