@@ -1,3 +1,4 @@
+//go:debug urlmaxqueryparams=0
 package main
 
 import (
