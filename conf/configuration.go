@@ -89,7 +89,6 @@ type configOptions struct {
 	PasswordEncryptionKey           string
 	ExtAuth                         extAuthOptions
 	Plugins                         pluginsOptions
-	PluginConfig                    map[string]map[string]string
 	HTTPHeaders                     httpHeaderOptions   `json:",omitzero"`
 	Prometheus                      prometheusOptions   `json:",omitzero"`
 	Scanner                         scannerOptions      `json:",omitzero"`
@@ -156,6 +155,7 @@ type subsonicOptions struct {
 	ArtistParticipations  bool
 	DefaultReportRealPath bool
 	LegacyClients         string
+	MinimalClients        string
 }
 
 type TagConf struct {
@@ -237,9 +237,11 @@ type blissOptions struct {
 }
 
 type pluginsOptions struct {
-	Enabled   bool
-	Folder    string
-	CacheSize string
+	Enabled    bool
+	Folder     string
+	CacheSize  string
+	AutoReload bool
+	LogLevel   string
 }
 
 type extAuthOptions struct {
@@ -375,10 +377,6 @@ func Load(noConfigDump bool) {
 		disableExternalServices()
 	}
 
-	if Server.Scanner.Extractor != consts.DefaultScannerExtractor {
-		log.Warn(fmt.Sprintf("Extractor '%s' is not implemented, using 'taglib'", Server.Scanner.Extractor))
-		Server.Scanner.Extractor = consts.DefaultScannerExtractor
-	}
 	logDeprecatedOptions("Scanner.GenreSeparators", "")
 	logDeprecatedOptions("Scanner.GroupAlbumReleases", "")
 	logDeprecatedOptions("DevEnableBufferedScrobble", "") // Deprecated: Buffered scrobbling is now always enabled and this option is ignored
@@ -652,7 +650,8 @@ func setViperDefaults() {
 	viper.SetDefault("lyricspriority", ".lrc,.txt,embedded")
 	viper.SetDefault("plugins.folder", "")
 	viper.SetDefault("plugins.enabled", false)
-	viper.SetDefault("plugins.cachesize", "100MB")
+	viper.SetDefault("plugins.cachesize", "200MB")
+	viper.SetDefault("plugins.autoreload", false)
 
 	// DevFlags. These are used to enable/disable debugging and incomplete features
 	viper.SetDefault("devlogsourceline", false)

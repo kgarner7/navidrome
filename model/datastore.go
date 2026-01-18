@@ -40,6 +40,8 @@ type DataStore interface {
 	ScrobbleBuffer(ctx context.Context) ScrobbleBufferRepository
 	Stat(ctx context.Context) StatRepository
 	Scrobble(ctx context.Context) ScrobbleRepository
+	Plugin(ctx context.Context) PluginRepository
+
 	Resource(ctx context.Context, model interface{}) ResourceRepository
 
 	WithTx(block func(tx DataStore) error, scope ...string) error

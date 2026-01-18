@@ -97,6 +97,10 @@ func (s *SQLStore) Scrobble(ctx context.Context) model.ScrobbleRepository {
 	return NewScrobbleRepository(ctx, s.getDBXBuilder())
 }
 
+func (s *SQLStore) Plugin(ctx context.Context) model.PluginRepository {
+	return NewPluginRepository(ctx, s.getDBXBuilder())
+}
+
 func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRepository {
 	switch m.(type) {
 	case model.User:
@@ -123,6 +127,8 @@ func (s *SQLStore) Resource(ctx context.Context, m interface{}) model.ResourceRe
 		return s.Scrobble(ctx).(model.ResourceRepository)
 	case model.Tag:
 		return s.Tag(ctx).(model.ResourceRepository)
+	case model.Plugin:
+		return s.Plugin(ctx).(model.ResourceRepository)
 	}
 	log.Error("Resource not implemented", "model", reflect.TypeOf(m).Name())
 	return nil

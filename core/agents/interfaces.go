@@ -23,6 +23,7 @@ type AlbumInfo struct {
 }
 
 type Artist struct {
+	ID   string
 	Name string
 	MBID string
 }
@@ -33,6 +34,7 @@ type ExternalImage struct {
 }
 
 type Song struct {
+	ID   string
 	Name string
 	MBID string
 }

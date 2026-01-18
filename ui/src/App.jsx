@@ -17,6 +17,7 @@ import radio from './radio'
 import share from './share'
 import listen from './listen'
 import library from './library'
+import plugin from './plugin'
 import { Player } from './audioplayer'
 import customRoutes from './routes'
 import {
@@ -138,6 +139,13 @@ const Admin = (props) => {
           <Resource
             name="missing"
             {...missing}
+            options={{ subMenu: 'settings' }}
+          />
+        ) : null,
+        permissions === 'admin' && config.pluginsEnabled ? (
+          <Resource
+            name="plugin"
+            {...plugin}
             options={{ subMenu: 'settings' }}
           />
         ) : null,
