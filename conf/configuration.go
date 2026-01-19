@@ -154,6 +154,7 @@ type subsonicOptions struct {
 	AppendSubtitle        bool
 	ArtistParticipations  bool
 	DefaultReportRealPath bool
+	EnableAverageRating   bool
 	LegacyClients         string
 	MinimalClients        string
 }
@@ -619,6 +620,7 @@ func setViperDefaults() {
 	viper.SetDefault("subsonic.appendsubtitle", true)
 	viper.SetDefault("subsonic.artistparticipations", false)
 	viper.SetDefault("subsonic.defaultreportrealpath", false)
+	viper.SetDefault("subsonic.enableaveragerating", true)
 	viper.SetDefault("subsonic.legacyclients", "DSub,SubMusic")
 	viper.SetDefault("agents", "lastfm,spotify,deezer")
 	viper.SetDefault("lastfm.enabled", true)
