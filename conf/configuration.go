@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"cmp"
 	"fmt"
 	"net/url"
 	"os"
@@ -57,6 +58,7 @@ type configOptions struct {
 	AutoTranscodeDownload           bool
 	DefaultDownsamplingFormat       string
 	SearchFullString                bool
+	SimilarSongsMatchThreshold      int
 	RecentlyAddedByModTime          bool
 	PreferSortTags                  bool
 	IgnoredArticles                 string
@@ -176,6 +178,9 @@ type lastfmOptions struct {
 	Secret                  string
 	Language                string
 	ScrobbleFirstArtistOnly bool
+
+	// Computed values
+	Languages []string // Computed from Language, split by comma
 }
 
 type spotifyOptions struct {
@@ -186,6 +191,9 @@ type spotifyOptions struct {
 type deezerOptions struct {
 	Enabled  bool
 	Language string
+
+	// Computed values
+	Languages []string // Computed from Language, split by comma
 }
 
 type listenBrainzOptions struct {
@@ -379,6 +387,16 @@ func Load(noConfigDump bool) {
 		disableExternalServices()
 	}
 
+	// Make sure we don't have empty PIDs
+	Server.PID.Album = cmp.Or(Server.PID.Album, consts.DefaultAlbumPID)
+	Server.PID.Track = cmp.Or(Server.PID.Track, consts.DefaultTrackPID)
+
+	// Parse LastFM.Language into Languages slice (comma-separated, with fallback to DefaultInfoLanguage)
+	Server.LastFM.Languages = parseLanguages(Server.LastFM.Language)
+
+	// Parse Deezer.Language into Languages slice (comma-separated, with fallback to DefaultInfoLanguage)
+	Server.Deezer.Languages = parseLanguages(Server.Deezer.Language)
+
 	logDeprecatedOptions("Scanner.GenreSeparators", "")
 	logDeprecatedOptions("Scanner.GroupAlbumReleases", "")
 	logDeprecatedOptions("DevEnableBufferedScrobble", "") // Deprecated: Buffered scrobbling is now always enabled and this option is ignored
@@ -465,6 +483,22 @@ func validatePlaylistsPath() error {
 		}
 	}
 	return nil
+}
+
+// parseLanguages parses a comma-separated language string into a slice.
+// It trims whitespace from each entry and ensures at least [DefaultInfoLanguage] is returned.
+func parseLanguages(lang string) []string {
+	var languages []string
+	for _, l := range strings.Split(lang, ",") {
+		l = strings.TrimSpace(l)
+		if l != "" {
+			languages = append(languages, l)
+		}
+	}
+	if len(languages) == 0 {
+		return []string{consts.DefaultInfoLanguage}
+	}
+	return languages
 }
 
 func validatePurgeMissingOption() error {
@@ -569,6 +603,7 @@ func setViperDefaults() {
 	// Config options only valid for file/env configuration
 	viper.SetDefault("defaultdownsamplingformat", consts.DefaultDownsamplingFormat)
 	viper.SetDefault("searchfullstring", false)
+	viper.SetDefault("similarsongsmatchthreshold", 85)
 	viper.SetDefault("recentlyaddedbymodtime", false)
 	viper.SetDefault("prefersorttags", false)
 	viper.SetDefault("ignoredarticles", "The El La Los Las Le Les Os As O A")
@@ -622,17 +657,18 @@ func setViperDefaults() {
 	viper.SetDefault("subsonic.artistparticipations", false)
 	viper.SetDefault("subsonic.defaultreportrealpath", false)
 	viper.SetDefault("subsonic.enableaveragerating", true)
-	viper.SetDefault("subsonic.legacyclients", "DSub,SubMusic")
+	viper.SetDefault("subsonic.legacyclients", "DSub")
+	viper.SetDefault("subsonic.minimalclients", "SubMusic")
 	viper.SetDefault("agents", "lastfm,spotify,deezer")
 	viper.SetDefault("lastfm.enabled", true)
-	viper.SetDefault("lastfm.language", "en")
+	viper.SetDefault("lastfm.language", consts.DefaultInfoLanguage)
 	viper.SetDefault("lastfm.apikey", "")
 	viper.SetDefault("lastfm.secret", "")
 	viper.SetDefault("lastfm.scrobblefirstartistonly", false)
 	viper.SetDefault("spotify.id", "")
 	viper.SetDefault("spotify.secret", "")
 	viper.SetDefault("deezer.enabled", true)
-	viper.SetDefault("deezer.language", "en")
+	viper.SetDefault("deezer.language", consts.DefaultInfoLanguage)
 	viper.SetDefault("listenbrainz.enabled", true)
 	viper.SetDefault("listenbrainz.baseurl", "https://api.listenbrainz.org/1/")
 	viper.SetDefault("enablescrobblehistory", true)
@@ -652,7 +688,7 @@ func setViperDefaults() {
 	viper.SetDefault("bliss.configpath", "")
 	viper.SetDefault("lyricspriority", ".lrc,.txt,embedded")
 	viper.SetDefault("plugins.folder", "")
-	viper.SetDefault("plugins.enabled", false)
+	viper.SetDefault("plugins.enabled", true)
 	viper.SetDefault("plugins.cachesize", "200MB")
 	viper.SetDefault("plugins.autoreload", false)
 
