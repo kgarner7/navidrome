@@ -237,7 +237,7 @@ func (m *MockMediaFileRepo) Count(...rest.QueryOptions) (int64, error) {
 	return m.CountAll()
 }
 
-func (m *MockMediaFileRepo) Read(id string) (interface{}, error) {
+func (m *MockMediaFileRepo) Read(id string) (any, error) {
 	mf, err := m.Get(id)
 	if errors.Is(err, model.ErrNotFound) {
 		return nil, rest.ErrNotFound
@@ -245,7 +245,7 @@ func (m *MockMediaFileRepo) Read(id string) (interface{}, error) {
 	return mf, err
 }
 
-func (m *MockMediaFileRepo) ReadAll(...rest.QueryOptions) (interface{}, error) {
+func (m *MockMediaFileRepo) ReadAll(...rest.QueryOptions) (any, error) {
 	return m.GetAll()
 }
 
@@ -253,7 +253,7 @@ func (m *MockMediaFileRepo) EntityName() string {
 	return "mediafile"
 }
 
-func (m *MockMediaFileRepo) NewInstance() interface{} {
+func (m *MockMediaFileRepo) NewInstance() any {
 	return &model.MediaFile{}
 }
 

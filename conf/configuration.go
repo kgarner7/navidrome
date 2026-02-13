@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -444,7 +445,7 @@ func mapDeprecatedOption(legacyName, newName string) {
 func parseIniFileConfiguration() {
 	cfgFile := viper.ConfigFileUsed()
 	if strings.ToLower(filepath.Ext(cfgFile)) == ".ini" {
-		var iniConfig map[string]interface{}
+		var iniConfig map[string]any
 		err := viper.Unmarshal(&iniConfig)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, "FATAL: Error parsing config:", err)
@@ -477,7 +478,7 @@ func disableExternalServices() {
 }
 
 func validatePlaylistsPath() error {
-	for _, path := range strings.Split(Server.PlaylistsPath, string(filepath.ListSeparator)) {
+	for path := range strings.SplitSeq(Server.PlaylistsPath, string(filepath.ListSeparator)) {
 		_, err := doublestar.Match(path, "")
 		if err != nil {
 			log.Error("Invalid PlaylistsPath", "path", path, err)
@@ -491,7 +492,7 @@ func validatePlaylistsPath() error {
 // It trims whitespace from each entry and ensures at least [DefaultInfoLanguage] is returned.
 func parseLanguages(lang string) []string {
 	var languages []string
-	for _, l := range strings.Split(lang, ",") {
+	for l := range strings.SplitSeq(lang, ",") {
 		l = strings.TrimSpace(l)
 		if l != "" {
 			languages = append(languages, l)
@@ -505,13 +506,7 @@ func parseLanguages(lang string) []string {
 
 func validatePurgeMissingOption() error {
 	allowedValues := []string{consts.PurgeMissingNever, consts.PurgeMissingAlways, consts.PurgeMissingFull}
-	valid := false
-	for _, v := range allowedValues {
-		if v == Server.Scanner.PurgeMissing {
-			valid = true
-			break
-		}
-	}
+	valid := slices.Contains(allowedValues, Server.Scanner.PurgeMissing)
 	if !valid {
 		err := fmt.Errorf("invalid Scanner.PurgeMissing value: '%s'. Must be one of: %v", Server.Scanner.PurgeMissing, allowedValues)
 		log.Error(err.Error())
