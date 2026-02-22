@@ -94,22 +94,6 @@ func (m *MockPlaylistRepo) Exists(id string) (bool, error) {
 	return false, nil
 }
 
-func (m *MockPlaylistRepo) Put(entity *model.Playlist) error {
-	if m.Error != nil {
-		return m.Error
-	}
-	m.Entity = entity
-	return nil
-}
-
-func (m *MockPlaylistRepo) Delete(_ string) error {
-	if m.Error != nil {
-		return m.Error
-	}
-	m.Entity = nil
-	return nil
-}
-
 func (m *MockPlaylistRepo) Count(_ ...rest.QueryOptions) (int64, error) {
 	if m.Err {
 		return 0, errors.New("error")
