@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 import {
   Datagrid,
   DateField,
@@ -14,14 +14,11 @@ import {
   useRecordContext,
   BulkDeleteButton,
   usePermissions,
-  useListContext,
-  CreateButton,
-  useTranslate,
-  BooleanField,
 } from 'react-admin'
 import Switch from '@material-ui/core/Switch'
-import { styled, Typography, useMediaQuery } from '@material-ui/core'
+import { Avatar } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
+import { useMediaQuery } from '@material-ui/core'
 import {
   DurationField,
   List,
@@ -32,79 +29,16 @@ import {
 } from '../common'
 import PlaylistListActions from './PlaylistListActions'
 import ChangePublicStatusButton from './ChangePublicStatusButton'
-import { Inbox } from '@material-ui/icons'
-import config from '../config'
-
-const PREFIX = 'RaEmpty'
-
-const EmptyClasses = {
-  message: `${PREFIX}-message`,
-  icon: `${PREFIX}-icon`,
-  toolbar: `${PREFIX}-toolbar`,
-}
-
-const Root = styled('span', {
-  name: PREFIX,
-  overridesResolver: (props, styles) => styles.root,
-})(({ theme }) => ({
-  flex: 1,
-  [`& .${EmptyClasses.message}`]: {
-    textAlign: 'center',
-    opacity: theme.palette.mode === 'light' ? 0.5 : 0.8,
-    margin: '0 1em',
-    color:
-      theme.palette.mode === 'light' ? 'inherit' : theme.palette.text.primary,
-  },
-
-  [`& .${EmptyClasses.icon}`]: {
-    width: '9em',
-    height: '9em',
-  },
-
-  [`& .${EmptyClasses.toolbar}`]: {
-    textAlign: 'center',
-    marginTop: '1em',
-  },
-}))
-
-const Empty = () => {
-  const translate = useTranslate()
-  const { resource } = useListContext()
-
-  const resourceName = translate(`resources.${resource}.forcedCaseName`, {
-    smart_count: 0,
-    _: resource,
-  })
-
-  const emptyMessage = translate('ra.page.empty', { name: resourceName })
-  const inviteMessage = translate('ra.page.invite')
-
-  return (
-    <Root>
-      <div className={EmptyClasses.message}>
-        <Inbox className={EmptyClasses.icon} />
-        <Typography variant="h4" paragraph>
-          {translate(`resources.${resource}.empty`, {
-            _: emptyMessage,
-          })}
-        </Typography>
-        <Typography variant="body1">
-          {translate(`resources.${resource}.invite`, {
-            _: inviteMessage,
-          })}
-        </Typography>
-      </div>
-      <div className={EmptyClasses.toolbar}>
-        <CreateButton variant="contained" />{' '}
-      </div>
-      <div className={EmptyClasses.toolbar}></div>
-    </Root>
-  )
-}
+import subsonic from '../subsonic'
 
 const useStyles = makeStyles((theme) => ({
   button: {
     color: theme.palette.type === 'dark' ? 'white' : undefined,
+  },
+  coverArt: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '4px',
   },
 }))
 
@@ -192,6 +126,25 @@ const ToggleAutoImport = ({ resource, source }) => {
   ) : null
 }
 
+const CoverArtField = () => {
+  const classes = useStyles()
+  const record = useRecordContext()
+  if (!record) return null
+  return (
+    <Avatar
+      src={subsonic.getCoverArtUrl(record, 80, true)}
+      variant="square"
+      className={classes.coverArt}
+      alt={record.name}
+    />
+  )
+}
+
+CoverArtField.defaultProps = {
+  label: '',
+  sortable: false,
+}
+
 const PlaylistListBulkActions = (props) => {
   const classes = useStyles()
   return (
@@ -236,13 +189,12 @@ const PlaylistList = (props) => {
   const columns = useSelectedFields({
     resource: 'playlist',
     columns: toggleableFields,
-    defaultOff: ['comment', 'external'],
+    defaultOff: ['comment'],
   })
 
   return (
     <List
       {...props}
-      empty={<Empty />}
       exporter={false}
       sort={{ field: 'name', order: 'ASC' }}
       filters={<PlaylistFilter />}
@@ -250,6 +202,7 @@ const PlaylistList = (props) => {
       bulkActionButtons={!isXsmall && <PlaylistListBulkActions />}
     >
       <Datagrid rowClick="show" isRowSelectable={(r) => isWritable(r?.ownerId)}>
+        <CoverArtField source="id" />
         <TextField source="name" />
         {columns}
         <Writable>
