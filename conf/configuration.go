@@ -46,6 +46,7 @@ type configOptions struct {
 	EnableTranscodingCancellation   bool
 	EnableDownloads                 bool
 	EnableExternalServices          bool
+	EnableM3UExternalAlbumArt       bool
 	EnableInsightsCollector         bool
 	EnableMediaFileCoverArt         bool
 	TranscodingCacheSize            string
@@ -75,6 +76,7 @@ type configOptions struct {
 	EnableFavourites                bool
 	EnableStarRating                bool
 	EnableUserEditing               bool
+	EnableCoverArtUpload            bool
 	EnableSharing                   bool
 	ShareURL                        string
 	DefaultShareExpiration          time.Duration
@@ -485,6 +487,7 @@ func parseIniFileConfiguration() {
 func disableExternalServices() {
 	log.Info("All external integrations are DISABLED!")
 	Server.EnableInsightsCollector = false
+	Server.EnableM3UExternalAlbumArt = false
 	Server.LastFM.Enabled = false
 	Server.Spotify.ID = ""
 	Server.Deezer.Enabled = false
@@ -650,6 +653,7 @@ func setViperDefaults() {
 	viper.SetDefault("smartPlaylistRefreshDelay", 5*time.Second)
 	viper.SetDefault("enabledownloads", true)
 	viper.SetDefault("enableexternalservices", true)
+	viper.SetDefault("enablem3uexternalalbumart", false)
 	viper.SetDefault("enablemediafilecoverart", true)
 	viper.SetDefault("autotranscodedownload", false)
 
@@ -679,6 +683,7 @@ func setViperDefaults() {
 	viper.SetDefault("enablereplaygain", true)
 	viper.SetDefault("enablecoveranimation", true)
 	viper.SetDefault("enablenowplaying", true)
+	viper.SetDefault("enablecoverartupload", true)
 	viper.SetDefault("enablesharing", false)
 	viper.SetDefault("shareurl", "")
 	viper.SetDefault("defaultshareexpiration", 8760*time.Hour)

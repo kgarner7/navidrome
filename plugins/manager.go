@@ -16,6 +16,7 @@ import (
 	extism "github.com/extism/go-sdk"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/core/agents"
+	"github.com/navidrome/navidrome/core/lyrics"
 	"github.com/navidrome/navidrome/core/scrobbler"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -146,6 +147,12 @@ func (m *Manager) Start(ctx context.Context) error {
 
 	log.Info(ctx, "Starting plugin manager", "folder", folder)
 
+	// Clear previous error states so plugins can be retried on restart
+	adminCtx := adminContext(ctx)
+	if err := m.ds.Plugin(adminCtx).ClearErrors(); err != nil {
+		log.Error(ctx, "Error clearing plugin errors", err)
+	}
+
 	// Sync plugins folder with DB
 	if err := m.syncPlugins(ctx, folder); err != nil {
 		log.Error(ctx, "Error syncing plugins with DB", err)
@@ -273,6 +280,22 @@ func (m *Manager) LoadScrobbler(name string) (scrobbler.Scrobbler, bool) {
 		allowedUserIDs: plugin.allowedUserIDs,
 		allUsers:       plugin.allUsers,
 		userIDMap:      userIDMap,
+	}, true
+}
+
+// LoadLyricsProvider loads and returns a lyrics provider plugin by name.
+func (m *Manager) LoadLyricsProvider(name string) (lyrics.Lyrics, bool) {
+	m.mu.RLock()
+	plugin, ok := m.plugins[name]
+	m.mu.RUnlock()
+
+	if !ok || !hasCapability(plugin.capabilities, CapabilityLyrics) {
+		return nil, false
+	}
+
+	return &LyricsPlugin{
+		name:   plugin.name,
+		plugin: plugin,
 	}, true
 }
 
