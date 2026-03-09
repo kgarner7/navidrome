@@ -134,7 +134,6 @@ type configOptions struct {
 	DevExternalScanner                bool
 	DevScannerThreads                 uint
 	DevSelectiveWatcher               bool
-	DevLegacyEmbedImage               bool
 	DevInsightsInitialDelay           time.Duration
 	DevEnablePlayerInsights           bool
 	DevEnablePluginsInsights          bool
@@ -142,6 +141,7 @@ type configOptions struct {
 	DevExternalArtistFetchMultiplier  float64
 	DevOptimizeDB                     bool
 	DevPreserveUnicodeInExternalCalls bool
+	DevEnableMediaFileProbe           bool
 }
 
 type scannerOptions struct {
@@ -783,6 +783,7 @@ func setViperDefaults() {
 	viper.SetDefault("devexternalartistfetchmultiplier", 1.5)
 	viper.SetDefault("devoptimizedb", true)
 	viper.SetDefault("devpreserveunicodeinexternalcalls", false)
+	viper.SetDefault("devenablemediafileprobe", true)
 }
 
 func init() {
