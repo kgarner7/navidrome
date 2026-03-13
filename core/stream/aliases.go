@@ -1,4 +1,4 @@
-package transcode
+package stream
 
 import (
 	"slices"
@@ -10,7 +10,7 @@ var containerAliasGroups = func() map[string]string {
 	groups := [][]string{
 		{"aac", "adts", "m4a", "mp4", "m4b", "m4p"},
 		{"mpeg", "mp3", "mp2"},
-		{"ogg", "oga"},
+		{"ogg", "oga", "opus"},
 		{"aif", "aiff"},
 		{"asf", "wma"},
 		{"mpc", "mpp"},
@@ -78,6 +78,11 @@ func matchesContainer(suffix string, containers []string) bool {
 // including common aliases.
 func matchesCodec(codec string, codecs []string) bool {
 	return matchesWithAliases(codec, codecs, codecAliasGroups)
+}
+
+// IsAACCodec returns true if the given codec or container name resolves to AAC.
+func IsAACCodec(name string) bool {
+	return matchesCodec(name, []string{"aac"}) || matchesContainer(name, []string{"aac"})
 }
 
 func containsIgnoreCase(slice []string, s string) bool {

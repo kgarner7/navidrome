@@ -1,4 +1,4 @@
-package transcode
+package stream
 
 import (
 	"context"
@@ -35,7 +35,7 @@ var _ = Describe("Decider", func() {
 	var (
 		ds  *tests.MockDataStore
 		ff  *tests.MockFFmpeg
-		svc Decider
+		svc TranscodeDecider
 		ctx context.Context
 	)
 
@@ -47,7 +47,7 @@ var _ = Describe("Decider", func() {
 		}
 		ff = tests.NewMockFFmpeg("")
 		auth.Init(ds)
-		svc = NewDecider(ds, ff)
+		svc = NewTranscodeDecider(ds, ff)
 	})
 
 	Describe("MakeDecision", func() {
@@ -59,7 +59,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"mp3"}, AudioCodecs: []string{"mp3"}, Protocols: []string{ProtocolHTTP}, MaxAudioChannels: 2},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 				Expect(decision.CanTranscode).To(BeFalse())
@@ -73,7 +73,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"mp3"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("container not supported"))
@@ -86,7 +86,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"m4a"}, AudioCodecs: []string{"aac"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("audio codec not supported"))
@@ -99,7 +99,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"flac"}, Protocols: []string{ProtocolHTTP}, MaxAudioChannels: 2},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("audio channels not supported"))
@@ -112,7 +112,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"aac"}, AudioCodecs: []string{"aac"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -124,7 +124,19 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"mp4"}, AudioCodecs: []string{"aac"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanDirectPlay).To(BeTrue())
+			})
+
+			It("handles container aliases (opus -> ogg)", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "opus", Codec: "Opus", BitRate: 165, Channels: 2, SampleRate: 48000})
+				ci := &ClientInfo{
+					DirectPlayProfiles: []DirectPlayProfile{
+						{Containers: []string{"ogg"}, AudioCodecs: []string{"opus"}, Protocols: []string{ProtocolHTTP}},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -136,7 +148,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"m4a"}, AudioCodecs: []string{"adts"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -148,7 +160,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"flac"}, AudioCodecs: []string{"flac"}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -160,7 +172,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{}, AudioCodecs: []string{}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -178,7 +190,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.CanTranscode).To(BeTrue())
@@ -198,7 +210,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP, MaxAudioChannels: 2},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.CanTranscode).To(BeTrue())
@@ -214,7 +226,7 @@ var _ = Describe("Decider", func() {
 						{Container: "flac", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeFalse())
 			})
@@ -226,10 +238,10 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
-				Expect(decision.TargetBitrate).To(Equal(defaultBitrate)) // 256 kbps
+				Expect(decision.TargetBitrate).To(Equal(160)) // mp3 default from mock transcoding repo
 			})
 
 			It("preserves lossy bitrate when under max", func() {
@@ -240,7 +252,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetBitrate).To(Equal(192)) // source bitrate in kbps
@@ -253,7 +265,7 @@ var _ = Describe("Decider", func() {
 						{Container: "wav", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeFalse())
 			})
@@ -266,7 +278,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetBitrate).To(Equal(96)) // capped by maxAudioBitrate
@@ -284,7 +296,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP, MaxAudioChannels: 2},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("opus"))
@@ -303,7 +315,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("mp3"))
@@ -318,7 +330,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.IsLossless).To(BeFalse()) // mp3 is lossy
@@ -329,7 +341,7 @@ var _ = Describe("Decider", func() {
 			It("returns error when nothing matches", func() {
 				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 1000, Channels: 6})
 				ci := &ClientInfo{}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.CanTranscode).To(BeFalse())
@@ -354,7 +366,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("audio bitrate not supported"))
@@ -376,7 +388,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -397,7 +409,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -418,7 +430,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 			})
@@ -440,7 +452,7 @@ var _ = Describe("Decider", func() {
 					},
 				}
 				// Source profile is empty (not yet populated from scanner), so Equals("LC") fails
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("audio profile not supported"))
@@ -462,7 +474,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
@@ -483,7 +495,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(ContainElement("audio samplerate not supported"))
@@ -508,7 +520,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.Bitrate).To(Equal(96))
@@ -531,7 +543,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.Channels).To(Equal(2))
@@ -554,7 +566,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.SampleRate).To(Equal(48000))
@@ -576,7 +588,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.BitDepth).To(Equal(16))
@@ -590,7 +602,7 @@ var _ = Describe("Decider", func() {
 						{Container: "flac", AudioCodec: "flac", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.BitDepth).To(Equal(24))
@@ -614,7 +626,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeFalse())
 			})
@@ -629,7 +641,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("mp3"))
@@ -648,7 +660,7 @@ var _ = Describe("Decider", func() {
 						{Container: "flac", AudioCodec: "flac", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("flac"))
@@ -676,7 +688,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				// DSD64 2822400 / 8 = 352800, capped by codec profile limit of 48000
@@ -703,7 +715,7 @@ var _ = Describe("Decider", func() {
 						},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				// DSD 1-bit → 24-bit PCM, then capped by codec profile limit to 16-bit
@@ -728,7 +740,7 @@ var _ = Describe("Decider", func() {
 					},
 					MaxTranscodingAudioBitrate: 256,
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.SourceStream.IsLossless).To(BeTrue())
 				Expect(decision.SourceStream.Codec).To(Equal("wavpack"))
@@ -750,7 +762,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"ogg"}, AudioCodecs: []string{"vorbis"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.SourceStream.IsLossless).To(BeFalse())
 				Expect(decision.CanDirectPlay).To(BeTrue())
@@ -766,7 +778,7 @@ var _ = Describe("Decider", func() {
 						{Container: "opus", AudioCodec: "opus", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("opus"))
@@ -783,7 +795,7 @@ var _ = Describe("Decider", func() {
 						{Container: "opus", AudioCodec: "opus", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.SampleRate).To(Equal(48000))
@@ -799,7 +811,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp4", AudioCodec: "aac", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				// TargetFormat is the internal format used for transcoding ("aac")
@@ -817,7 +829,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("mp3"))
@@ -834,7 +846,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.SampleRate).To(Equal(48000))
@@ -848,7 +860,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TranscodeStream.SampleRate).To(Equal(44100))
@@ -864,7 +876,7 @@ var _ = Describe("Decider", func() {
 						{Container: "aac", AudioCodec: "aac", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				// DSD64 2822400 / 8 = 352800, capped by AAC max of 96000
@@ -885,7 +897,7 @@ var _ = Describe("Decider", func() {
 						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.TranscodeReasons).To(HaveLen(3))
@@ -903,7 +915,7 @@ var _ = Describe("Decider", func() {
 						{Containers: []string{"flac"}, Protocols: []string{ProtocolHTTP}},
 					},
 				}
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.SourceStream.Container).To(Equal("flac"))
 				Expect(decision.SourceStream.Codec).To(Equal("flac"))
@@ -927,7 +939,7 @@ var _ = Describe("Decider", func() {
 				overrideCtx := request.WithTranscoding(ctx, model.Transcoding{TargetFormat: "mp3", DefaultBitRate: 192})
 				overrideCtx = request.WithPlayer(overrideCtx, model.Player{MaxBitRate: 0})
 
-				decision, err := svc.MakeDecision(overrideCtx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(overrideCtx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.CanTranscode).To(BeTrue())
@@ -945,7 +957,7 @@ var _ = Describe("Decider", func() {
 				}
 				overrideCtx := request.WithTranscoding(ctx, model.Transcoding{TargetFormat: "mp3", DefaultBitRate: 256})
 
-				decision, err := svc.MakeDecision(overrideCtx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(overrideCtx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 				Expect(decision.CanTranscode).To(BeFalse())
@@ -958,7 +970,7 @@ var _ = Describe("Decider", func() {
 				}
 				overrideCtx := request.WithTranscoding(ctx, model.Transcoding{TargetFormat: "mp3", DefaultBitRate: 192})
 
-				decision, err := svc.MakeDecision(overrideCtx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(overrideCtx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeFalse())
 				Expect(decision.CanTranscode).To(BeTrue())
@@ -974,7 +986,7 @@ var _ = Describe("Decider", func() {
 				overrideCtx := request.WithTranscoding(ctx, model.Transcoding{TargetFormat: "mp3", DefaultBitRate: 192})
 				overrideCtx = request.WithPlayer(overrideCtx, model.Player{MaxBitRate: 320})
 
-				decision, err := svc.MakeDecision(overrideCtx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(overrideCtx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("mp3"))
@@ -989,12 +1001,12 @@ var _ = Describe("Decider", func() {
 				overrideCtx := request.WithTranscoding(ctx, model.Transcoding{TargetFormat: "mp3", DefaultBitRate: 0})
 				overrideCtx = request.WithPlayer(overrideCtx, model.Player{MaxBitRate: 0})
 
-				decision, err := svc.MakeDecision(overrideCtx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(overrideCtx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("mp3"))
-				// With no cap, lossless→lossy uses defaultBitrate (256)
-				Expect(decision.TargetBitrate).To(Equal(defaultBitrate))
+				// With no cap, lossless→lossy uses format default bitrate (160 for mp3 from mock)
+				Expect(decision.TargetBitrate).To(Equal(160))
 			})
 
 			It("does not apply override when no transcoding is in context", func() {
@@ -1006,11 +1018,102 @@ var _ = Describe("Decider", func() {
 					},
 				}
 				// No override in context — client profiles used as-is
-				decision, err := svc.MakeDecision(ctx, mf, ci, DecisionOptions{})
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanDirectPlay).To(BeTrue())
 			})
 
+		})
+
+		Context("Player MaxBitRate cap", func() {
+			It("applies player MaxBitRate cap when client has no limit", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 1000, Channels: 2, SampleRate: 44100, BitDepth: 16})
+				ci := &ClientInfo{
+					Name: "TestClient",
+					DirectPlayProfiles: []DirectPlayProfile{
+						{Containers: []string{"flac", "mp3"}, AudioCodecs: []string{"flac", "mp3"}, Protocols: []string{ProtocolHTTP}},
+					},
+					TranscodingProfiles: []Profile{
+						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
+					},
+				}
+				playerCtx := request.WithPlayer(ctx, model.Player{MaxBitRate: 320})
+
+				decision, err := svc.MakeDecision(playerCtx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				// Source bitrate 1000 > player cap 320, so direct play is not possible
+				Expect(decision.CanDirectPlay).To(BeFalse())
+				Expect(decision.CanTranscode).To(BeTrue())
+				// Lossless→lossy should use MaxAudioBitrate (320) as target, not format default
+				Expect(decision.TargetBitrate).To(Equal(320))
+			})
+
+			It("uses client limit when it is more restrictive than player MaxBitRate", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 1000, Channels: 2, SampleRate: 44100, BitDepth: 16})
+				ci := &ClientInfo{
+					Name:                       "TestClient",
+					MaxAudioBitrate:            256,
+					MaxTranscodingAudioBitrate: 256,
+					TranscodingProfiles: []Profile{
+						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
+					},
+				}
+				playerCtx := request.WithPlayer(ctx, model.Player{MaxBitRate: 500})
+
+				decision, err := svc.MakeDecision(playerCtx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanTranscode).To(BeTrue())
+				// Client limit 256 < player cap 500, so player cap doesn't apply; client limit wins
+				Expect(decision.TargetBitrate).To(Equal(256))
+			})
+
+			It("does not cap when player MaxBitRate is 0", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "mp3", Codec: "MP3", BitRate: 320, Channels: 2, SampleRate: 44100})
+				ci := &ClientInfo{
+					Name: "TestClient",
+					DirectPlayProfiles: []DirectPlayProfile{
+						{Containers: []string{"mp3"}, AudioCodecs: []string{"mp3"}, Protocols: []string{ProtocolHTTP}},
+					},
+				}
+				playerCtx := request.WithPlayer(ctx, model.Player{MaxBitRate: 0})
+
+				decision, err := svc.MakeDecision(playerCtx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanDirectPlay).To(BeTrue())
+			})
+		})
+
+		Context("Format-aware default bitrate", func() {
+			It("uses opus default bitrate from DB", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 1000, Channels: 2, SampleRate: 48000, BitDepth: 16})
+				ci := &ClientInfo{
+					TranscodingProfiles: []Profile{
+						{Container: "opus", AudioCodec: "opus", Protocol: ProtocolHTTP},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanTranscode).To(BeTrue())
+				Expect(decision.TargetBitrate).To(Equal(96)) // opus default from mock
+			})
+
+			It("uses aac default bitrate from DB", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 1000, Channels: 2, SampleRate: 44100, BitDepth: 16})
+				ci := &ClientInfo{
+					TranscodingProfiles: []Profile{
+						{Container: "aac", AudioCodec: "aac", Protocol: ProtocolHTTP},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanTranscode).To(BeTrue())
+				Expect(decision.TargetBitrate).To(Equal(256)) // aac default from mock
+			})
+
+			It("falls back to 256 for unknown format", func() {
+				bitrate := lookupDefaultBitrate(ctx, ds, "xyz")
+				Expect(bitrate).To(Equal(fallbackBitrate))
+			})
 		})
 	})
 
@@ -1030,7 +1133,7 @@ var _ = Describe("Decider", func() {
 				Codec: "mp3", BitRate: 320, SampleRate: 44100, Channels: 2,
 			}
 
-			svc := NewDecider(ds, ff).(*deciderService)
+			svc := NewTranscodeDecider(ds, ff).(*deciderService)
 			probe, err := svc.ensureProbed(ctx, mf)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(mf.ProbeData).ToNot(BeEmpty())
@@ -1051,7 +1154,7 @@ var _ = Describe("Decider", func() {
 			// Set error on mock — if ffprobe were called, this would fail
 			ff.Error = fmt.Errorf("should not be called")
 
-			svc := NewDecider(ds, ff).(*deciderService)
+			svc := NewTranscodeDecider(ds, ff).(*deciderService)
 			probe, err := svc.ensureProbed(ctx, mf)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(probe).To(BeNil())
@@ -1061,7 +1164,7 @@ var _ = Describe("Decider", func() {
 			mf := &model.MediaFile{ID: "probe-3", Suffix: "mp3"}
 			ff.Error = fmt.Errorf("ffprobe not found")
 
-			svc := NewDecider(ds, ff).(*deciderService)
+			svc := NewTranscodeDecider(ds, ff).(*deciderService)
 			_, err := svc.ensureProbed(ctx, mf)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("probing media file"))
@@ -1076,7 +1179,7 @@ var _ = Describe("Decider", func() {
 			// Set a result — if ffprobe were called, ProbeData would be populated
 			ff.ProbeAudioResult = &ffmpeg.AudioProbeResult{Codec: "mp3"}
 
-			svc := NewDecider(ds, ff).(*deciderService)
+			svc := NewTranscodeDecider(ds, ff).(*deciderService)
 			probe, err := svc.ensureProbed(ctx, mf)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(probe).To(BeNil())

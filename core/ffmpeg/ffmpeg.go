@@ -283,7 +283,7 @@ var formatCodecMap = map[string]string{
 var formatOutputMap = map[string]string{
 	"mp3":  "mp3",
 	"opus": "opus",
-	"aac":  "ipod",
+	"aac":  "adts",
 	"flac": "flac",
 }
 
@@ -339,11 +339,6 @@ func buildDynamicArgs(opts TranscodeOptions) []string {
 		args = append(args, "-f", outputFmt)
 	}
 
-	// For AAC in MP4 container, enable fragmented MP4 for pipe-safe streaming
-	if opts.Format == "aac" {
-		args = append(args, "-movflags", "frag_keyframe+empty_moov")
-	}
-
 	args = append(args, "-")
 	return args
 }
@@ -382,7 +377,7 @@ func injectBeforeOutput(args []string, flag, value string) []string {
 // isLosslessOutputFormat returns true if the format is a lossless audio format
 // where preserving bit depth via -sample_fmt is meaningful.
 // Note: this covers only formats ffmpeg can produce as output. For the full set of
-// lossless formats used in transcoding decisions, see core/transcode/codec.go:isLosslessFormat.
+// lossless formats used in transcoding decisions, see core/stream/codec.go:isLosslessFormat.
 func isLosslessOutputFormat(format string) bool {
 	switch strings.ToLower(format) {
 	case "flac", "alac", "wav", "aiff":
