@@ -136,7 +136,7 @@ type Child struct {
 	Id                    string     `xml:"id,attr"                                 json:"id"`
 	Parent                string     `xml:"parent,attr,omitempty"                   json:"parent,omitempty"`
 	IsDir                 bool       `xml:"isDir,attr"                              json:"isDir"`
-	Title                 string     `xml:"title,attr,omitempty"                    json:"title,omitempty"`
+	Title                 string     `xml:"title,attr"                              json:"title"`
 	Name                  string     `xml:"name,attr,omitempty"                     json:"name,omitempty"`
 	Album                 string     `xml:"album,attr,omitempty"                    json:"album,omitempty"`
 	Artist                string     `xml:"artist,attr,omitempty"                   json:"artist,omitempty"`
@@ -586,8 +586,9 @@ func (r ReplayGain) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 type DiscTitle struct {
-	Disc  int32  `xml:"disc,attr" json:"disc"`
-	Title string `xml:"title,attr" json:"title"`
+	Disc     int32  `xml:"disc,attr"                json:"disc"`
+	Title    string `xml:"title,attr"               json:"title"`
+	CoverArt string `xml:"coverArt,attr,omitempty"  json:"coverArt,omitempty"`
 }
 
 type ItemDate struct {
