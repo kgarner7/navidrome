@@ -6,13 +6,18 @@ import CardContent from '@material-ui/core/CardContent'
 import CardMedia from '@material-ui/core/CardMedia'
 import ArtistExternalLinks from './ArtistExternalLink'
 import config from '../config'
-import { LoveButton, RatingField, ImageUploadOverlay } from '../common'
+import {
+  LoveButton,
+  RatingField,
+  ImageUploadOverlay,
+  useImageLoadingState,
+} from '../common'
 import Lightbox from 'react-image-lightbox'
 import ExpandInfoDialog from '../dialogs/ExpandInfoDialog'
 import AlbumInfo from '../album/AlbumInfo'
+import { COVER_ART_SIZE } from '../consts'
 import subsonic from '../subsonic'
 import { SafeHTML } from '../common/SafeHTML'
-import useArtistImageState from './useArtistImageState'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -95,7 +100,7 @@ const DesktopArtistDetails = ({ artistInfo, record, biography }) => {
     handleImageError,
     handleOpenLightbox,
     handleCloseLightbox,
-  } = useArtistImageState(record.id)
+  } = useImageLoadingState(record.id)
 
   return (
     <div className={classes.root}>
@@ -105,7 +110,7 @@ const DesktopArtistDetails = ({ artistInfo, record, biography }) => {
             <CardMedia
               key={record.id}
               component="img"
-              src={subsonic.getCoverArtUrl(record, 300)}
+              src={subsonic.getCoverArtUrl(record, COVER_ART_SIZE)}
               className={`${classes.cover} ${imageLoading ? classes.coverLoading : ''}`}
               onClick={handleOpenLightbox}
               onLoad={handleImageLoad}

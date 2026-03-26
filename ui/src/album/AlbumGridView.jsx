@@ -19,7 +19,7 @@ import {
   ArtistLinkField,
   OverflowTooltip,
 } from '../common'
-import { DraggableTypes } from '../consts'
+import { COVER_ART_SIZE, DraggableTypes } from '../consts'
 import clsx from 'clsx'
 import { AlbumDatesField } from './AlbumDatesField.jsx'
 
@@ -33,13 +33,11 @@ const useStyles = makeStyles(
       transition: 'all 150ms ease-out',
       opacity: 0,
       textAlign: 'left',
-      marginBottom: '3px',
       background:
         'linear-gradient(to top, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
     },
     tileBarMobile: {
       textAlign: 'left',
-      marginBottom: '3px',
       background:
         'linear-gradient(to top, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
     },
@@ -94,6 +92,11 @@ const useStyles = makeStyles(
 )
 
 const useCoverStyles = makeStyles({
+  coverContainer: {
+    width: '100%',
+    aspectRatio: '1',
+    overflow: 'hidden',
+  },
   cover: {
     display: 'inline-block',
     width: '100%',
@@ -150,11 +153,11 @@ const Cover = withContentRect('bounds')(({
   }, [])
 
   return (
-    <div ref={measureRef}>
+    <div ref={measureRef} className={classes.coverContainer}>
       <div ref={dragAlbumRef}>
         <img
           key={record.id} // Force re-render when record changes
-          src={subsonic.getCoverArtUrl(record, 300, true)}
+          src={subsonic.getCoverArtUrl(record, COVER_ART_SIZE, true)}
           alt={record.name}
           className={`${classes.cover} ${imageLoading ? classes.coverLoading : ''}`}
           onLoad={handleImageLoad}

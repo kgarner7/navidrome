@@ -16,8 +16,8 @@ import (
 	"github.com/kr/pretty"
 	"github.com/navidrome/navidrome/consts"
 	"github.com/navidrome/navidrome/log"
+	"github.com/navidrome/navidrome/scheduler"
 	"github.com/navidrome/navidrome/utils/run"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 )
 
@@ -352,9 +352,11 @@ func Load(noConfigDump bool) {
 			os.Exit(1)
 		}
 		log.SetOutput(out)
-	} else if os.Getenv("JOURNAL_STREAM") != "" {
+	} else if os.Getenv("ND_SYSTEMD_PRIORITY_LOGGING") != "" && os.Getenv("JOURNAL_STREAM") != "" {
 		// When running under systemd, prepend syslog priority prefixes so
 		// journald assigns the correct severity to each log line.
+		// Note that we have an additional environment variable, as JOURNAL_STREAM
+		// can be present in a systemd environment even if not running as a systemd service
 		log.EnableJournalFormat()
 	}
 
@@ -582,15 +584,9 @@ func validateBackupSchedule() error {
 }
 
 func validateSchedule(schedule, field string) (string, error) {
-	if _, err := time.ParseDuration(schedule); err == nil {
-		schedule = "@every " + schedule
-	}
-	c := cron.New()
-	id, err := c.AddFunc(schedule, func() {})
+	_, err := scheduler.ParseCrontab(schedule)
 	if err != nil {
 		log.Error(fmt.Sprintf("Invalid %s. Please read format spec at https://pkg.go.dev/github.com/robfig/cron#hdr-CRON_Expression_Format", field), "schedule", schedule, err)
-	} else {
-		c.Remove(id)
 	}
 	return schedule, err
 }
