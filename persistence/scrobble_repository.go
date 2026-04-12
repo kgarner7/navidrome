@@ -41,7 +41,7 @@ func NewScrobbleRepository(ctx context.Context, db dbx.Builder) model.ScrobbleRe
 	r.db = db
 	r.tableName = "scrobbles"
 	r.registerModel(&model.Scrobble{}, map[string]filterFunc{
-		"title": fullTextFilter("f"),
+		"title": fullTextFilter("media_file"),
 	})
 	r.setSortMappings(map[string]string{
 		"listened_at":  "scrobbles.submission_time",
@@ -71,7 +71,7 @@ func (r *scrobbleRepository) Count(options ...rest.QueryOptions) (int64, error) 
 
 	sel := r.newSelect().
 		Columns("count(*) count").
-		Join("media_file f on f.id = file_id").
+		Join("media_file on media_file.id = file_id").
 		Where(Eq{"user_id": user.ID})
 
 	sel = r.applyFilters(sel, r.parseRestOptions(r.ctx, options...))
@@ -88,10 +88,10 @@ func (r *scrobbleRepository) ReadAll(options ...rest.QueryOptions) (interface{},
 	user := loggedUser(r.ctx)
 
 	sel := r.newSelect(r.parseRestOptions(r.ctx, options...)).
-		Columns("scrobbles.ROWID row_id", "submission_time", "f.*").
-		Join("media_file f on f.id = file_id").
+		Columns("scrobbles.ROWID row_id", "submission_time", "media_file.*").
+		Join("media_file on media_file.id = file_id").
 		LeftJoin("annotation on ("+
-			"annotation.item_id = f.id"+
+			"annotation.item_id = media_file.id"+
 			" AND annotation.item_type = 'media_file'"+
 			" AND annotation.user_id = '"+user.ID+"')").
 		Columns(
