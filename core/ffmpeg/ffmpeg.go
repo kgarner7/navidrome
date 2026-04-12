@@ -49,6 +49,7 @@ type FFmpeg interface {
 	ProbeAudioStream(ctx context.Context, filePath string) (*AudioProbeResult, error)
 	CmdPath() (string, error)
 	IsAvailable() bool
+	IsProbeAvailable() bool
 	Version() string
 }
 
@@ -222,6 +223,19 @@ func (e *ffmpeg) CmdPath() (string, error) {
 func (e *ffmpeg) IsAvailable() bool {
 	_, err := ffmpegCmd()
 	return err == nil
+}
+
+func (e *ffmpeg) IsProbeAvailable() bool {
+	if _, err := ffmpegCmd(); err != nil {
+		return false
+	}
+	probeOnce.Do(func() {
+		probePath := ffprobePath(ffmpegPath)
+		if _, err := exec.LookPath(probePath); err == nil {
+			probeAvail = true
+		}
+	})
+	return probeAvail
 }
 
 // Version executes ffmpeg -version and extracts the version from the output.
@@ -398,8 +412,9 @@ func buildDynamicArgs(opts TranscodeOptions) []string {
 
 // buildTemplateArgs handles user-customized command templates, with dynamic injection
 // of sample rate, channels, and bit depth when requested by the transcode decision.
-// Note: these flags are injected unconditionally when non-zero, even if the template
-// already includes them. FFmpeg uses the last occurrence of duplicate flags.
+// Values in opts have already been clamped to codec limits upstream (see
+// core/stream/codec.go codecMax* helpers), so injecting them unconditionally is safe —
+// ffmpeg honors the last occurrence of a duplicate flag.
 func buildTemplateArgs(opts TranscodeOptions) []string {
 	args := createFFmpegCommand(opts.Command, opts.FilePath, opts.BitRate, opts.Offset)
 
@@ -533,4 +548,6 @@ var (
 	ffOnce     sync.Once
 	ffmpegPath string
 	ffmpegErr  error
+	probeOnce  sync.Once
+	probeAvail bool
 )
