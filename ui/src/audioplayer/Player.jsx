@@ -277,18 +277,6 @@ const Player = () => {
     }
   }, [])
 
-  const onAudioSeeked = useCallback(
-    (info) => {
-      if (!info.isRadio && currentTrackId) {
-        const posMs = Math.floor(info.currentTime * 1000)
-        lastPositionMsRef.current = posMs
-        const state = audioInstance?.paused ? 'paused' : 'playing'
-        subsonic.reportPlayback(currentTrackId, posMs, state)
-      }
-    },
-    [currentTrackId, audioInstance],
-  )
-
   const onAudioVolumeChange = useCallback(
     // sqrt to compensate for the logarithmic volume
     (volume) => dispatch(setVolume(Math.sqrt(volume))),
@@ -441,6 +429,35 @@ const Player = () => {
     }
   }, [isMobilePlayer, audioInstance])
 
+  // Report every seek (including programmatic ones the library does not surface
+  // via onAudioSeeked, e.g. restartCurrentOnPrev). Debounce coalesces drag
+  // bursts into one report at the final position.
+  useEffect(() => {
+    if (!audioInstance) return
+    let timer = null
+    const flush = () => {
+      timer = null
+      if (
+        !currentTrackIdRef.current ||
+        playerStateRef.current?.current?.isRadio
+      ) {
+        return
+      }
+      const posMs = Math.floor((audioInstance.currentTime || 0) * 1000)
+      const state = audioInstance.paused ? 'paused' : 'playing'
+      subsonic.reportPlayback(currentTrackIdRef.current, posMs, state)
+    }
+    const handleSeeked = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(flush, 250)
+    }
+    audioInstance.addEventListener('seeked', handleSeeked)
+    return () => {
+      if (timer) clearTimeout(timer)
+      audioInstance.removeEventListener('seeked', handleSeeked)
+    }
+  }, [audioInstance])
+
   return (
     <ThemeProvider theme={createMuiTheme(theme)}>
       <ReactJkMusicPlayer
@@ -449,7 +466,6 @@ const Player = () => {
         onAudioListsChange={onAudioListsChange}
         onAudioVolumeChange={onAudioVolumeChange}
         onAudioProgress={onAudioProgress}
-        onAudioSeeked={onAudioSeeked}
         onAudioPlay={onAudioPlay}
         onAudioPlayTrackChange={onAudioPlayTrackChange}
         onAudioPause={onAudioPause}
