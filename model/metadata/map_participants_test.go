@@ -691,7 +691,7 @@ var _ = Describe("Participants", func() {
 		When("the tag has multiple values", func() {
 			It("should split each value individually", func() {
 				mf = toMediaFile(model.RawTags{
-					"COMPOSER": {"John Doe/Jane Doe", "Someone Else"},
+					"COMPOSER": {"John Doe / Jane Doe", "Someone Else"},
 				})
 
 				participants := mf.Participants
